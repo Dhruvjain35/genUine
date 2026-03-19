@@ -1,0 +1,107 @@
+genUine MVP — Complete Project Structure
+==========================================
+
+/genuine-mvp/
+├── app/
+│   ├── api/
+│   │   └── generate-message/
+│   │       └── route.ts          (API endpoint — receives userExamples, targetProfile, userName)
+│   ├── globals.css               (Global styles, animations, brand colors)
+│   ├── layout.tsx                (Root layout with metadata, fonts, styling)
+│   └── page.tsx                  (Main UI — 3-step form, results, rate limiting)
+├── .env.local.example            (Template for API key)
+├── .gitignore                    (Git configuration)
+├── next.config.js                (Next.js configuration)
+├── package.json                  (Dependencies: next, react, @anthropic-ai/sdk, tailwind)
+├── postcss.config.js             (PostCSS + Tailwind configuration)
+├── tailwind.config.ts            (Tailwind theme with genUine brand colors)
+├── tsconfig.json                 (TypeScript configuration)
+└── README.md                     (Quick start guide)
+
+KEY FILES BREAKDOWN
+===================
+
+1. app/page.tsx (Main UI Component)
+   - 3-step form: "your voice", "their profile", "your name"
+   - Textarea inputs (3-5 user examples, up to 5)
+   - Large target profile textarea
+   - Name input field
+   - Generate button with loading state
+   - Results display: 2 message cards side-by-side
+   - Copy-to-clipboard buttons with feedback
+   - Rate limiting: 5 messages per session (React state)
+   - Mobile responsive design
+   - Brand colors: cream background, terracotta accents
+
+2. app/api/generate-message/route.ts (API Endpoint)
+   - POST endpoint receiving: userExamples[], targetProfile, userName
+   - Validates minimum 2 examples + profile + name
+   - Calls claude-sonnet-4-6 with custom system prompt
+   - System prompt ensures AI learns user's exact writing style
+   - Returns JSON: { messageA, messageB, styleNotes }
+   - Error handling with warm error messages
+
+3. app/globals.css (Styling)
+   - Google Fonts: Plus Jakarta Sans (headings), DM Sans (body)
+   - Custom animations: fadeIn, pulse-gentle
+   - Focus states with terracotta border + shadow
+   - Brand color variables
+   - Smooth transitions throughout
+
+4. app/layout.tsx (Layout)
+   - Metadata: title, description, OpenGraph tags
+   - Body styling: background (#FAF9F7), text color (#2D2D2D)
+   - Fonts imported from Google
+
+5. tailwind.config.ts (Tailwind Configuration)
+   - Custom colors:
+     * genuine-cream: #FAF9F7
+     * genuine-terracotta: #C4784A
+     * genuine-amber: #F2A922
+     * genuine-dark: #2D2D2D
+   - Custom fonts: jakarta, dm-sans
+
+BRAND IDENTITY
+==============
+Colors:
+- Cream Background: #FAF9F7
+- Terracotta Primary: #C4784A
+- Amber Accent: #F2A922
+- Dark Text: #2D2D2D
+
+Fonts:
+- Headings: Plus Jakarta Sans (700 weight)
+- Body: DM Sans (400, 500 weight)
+
+Voice:
+- Warm, human, not corporate
+- Footer: "see u later — shaan"
+- Tagline: "your message. not AI's."
+
+FEATURES IMPLEMENTED
+====================
+✓ 3-step form with validation
+✓ 3-5 message examples input
+✓ Target LinkedIn profile input
+✓ User name personalization
+✓ Claude Sonnet 4.6 integration
+✓ Style analysis and learning
+✓ 2 generated message options (common ground + curiosity)
+✓ Copy-to-clipboard with visual feedback
+✓ Style notes explaining what was noticed
+✓ 5 messages per session rate limit
+✓ Loading state with animation
+✓ Error handling with warm messaging
+✓ Mobile responsive design
+✓ Brand-aligned UI with custom colors
+✓ Smooth animations and transitions
+
+SETUP INSTRUCTIONS
+==================
+1. npm install
+2. Add ANTHROPIC_API_KEY to .env.local
+3. npm run dev
+4. Open http://localhost:3000
+
+All files created: March 15, 2026
+Ready for development!

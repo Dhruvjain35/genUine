@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\PRO\\\\Claude XD\\\\genuine-mvp\\\\.claude\")",
+      "Bash(\"C:\\\\Users\\\\PRO\\\\Claude XD\\\\genuine-mvp\\\\.claude\\\\launch.json\")",
+      "Bash(where npm:*)",
+      "Bash(ls \"C:/Users/PRO/Claude XD/genuine-mvp/.env\"*)",
+      "Bash(printenv)",
+      "Bash(printenv ANTHROPIC_API_KEY)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
