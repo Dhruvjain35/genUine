@@ -2,13 +2,17 @@
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 
+const TONES = ['casual', 'formal', 'curious'] as const;
+
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled: boolean;
   messagesRemaining: number;
+  tone?: string;
+  onToneChange?: (tone: string) => void;
 }
 
-export default function ChatInput({ onSend, disabled, messagesRemaining }: ChatInputProps) {
+export default function ChatInput({ onSend, disabled, messagesRemaining, tone, onToneChange }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +92,31 @@ export default function ChatInput({ onSend, disabled, messagesRemaining }: ChatI
         borderTop: '1px solid #DCDCDC',
       }}
     >
+      {/* Tone selector — shown when onToneChange is wired up */}
+      {onToneChange && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs" style={{ color: '#CCCCCC', flexShrink: 0 }}>tone</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {TONES.map((t) => (
+              <button
+                key={t}
+                onClick={() => onToneChange(tone === t ? '' : t)}
+                className="text-xs px-3 py-1 rounded-full"
+                style={{
+                  backgroundColor: tone === t ? '#F0A824' : 'transparent',
+                  color: tone === t ? '#FFFFFF' : '#AAAAAA',
+                  border: `1px solid ${tone === t ? '#F0A824' : '#DCDCDC'}`,
+                  transition: 'all 0.15s ease',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div
         className="flex items-end gap-3 rounded-2xl px-4 py-2.5"
         style={{

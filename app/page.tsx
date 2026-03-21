@@ -43,6 +43,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [messagesGeneratedToday, setMessagesGeneratedToday] = useState(0);
+  const [selectedTone, setSelectedTone] = useState('');
 
   const messagesRemaining = MAX_MESSAGES_PER_DAY - messagesGeneratedToday;
 
@@ -187,6 +188,7 @@ export default function Home() {
             messages: trimmedMessages,
             voiceProfile: profileForApi,
             messagesRemaining,
+            tone: selectedTone || undefined,
           }),
         });
 
@@ -315,6 +317,8 @@ export default function Home() {
           onSend={handleSendMessage}
           disabled={isLoading}
           messagesRemaining={messagesRemaining}
+          tone={selectedTone}
+          onToneChange={setSelectedTone}
         />
       )}
 

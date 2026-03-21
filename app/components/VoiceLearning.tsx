@@ -35,7 +35,8 @@ interface VoiceLearningProps {
 export default function VoiceLearning({ onComplete }: VoiceLearningProps) {
   const [phase, setPhase] = useState<'intro' | 'question' | 'submitted' | 'analyzing'>('intro');
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+  // allAnswers stores answer per step index — allows back/forward without losing data
+  const [allAnswers, setAllAnswers] = useState<string[]>(Array(SCENARIOS.length).fill(''));
   const [input, setInput] = useState('');
   const [userBubble, setUserBubble] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -49,25 +50,34 @@ export default function VoiceLearning({ onComplete }: VoiceLearningProps) {
 
   const handleStart = () => setPhase('question');
 
+  const handleBack = () => {
+    if (step === 0 || phase !== 'question') return;
+    setInput(allAnswers[step - 1]); // restore previous answer
+    setStep((s) => s - 1);
+  };
+
   const handleSubmit = () => {
     const trimmed = input.trim();
     if (!trimmed || phase !== 'question') return;
+
+    const updated = [...allAnswers];
+    updated[step] = trimmed;
+    setAllAnswers(updated);
 
     setUserBubble(trimmed);
     setInput('');
     setPhase('submitted');
 
-    const newAnswers = [...answers, trimmed];
-
     setTimeout(() => {
-      setAnswers(newAnswers);
       if (step < SCENARIOS.length - 1) {
+        // Pre-fill input if they've already answered the next step before
+        setInput(updated[step + 1] || '');
         setStep((s) => s + 1);
         setUserBubble('');
         setPhase('question');
       } else {
         setPhase('analyzing');
-        onComplete(newAnswers);
+        onComplete(updated.filter(Boolean));
       }
     }, 750);
   };
@@ -350,9 +360,22 @@ export default function VoiceLearning({ onComplete }: VoiceLearningProps) {
                 </button>
               </div>
 
-              <p className="text-xs text-center mt-2" style={{ color: '#CCCCCC' }}>
-                enter to send · be yourself, not professional
-              </p>
+              <div className="flex items-center justify-between mt-2">
+                {step > 0 ? (
+                  <button
+                    onClick={handleBack}
+                    className="text-xs flex items-center gap-1"
+                    style={{ color: '#BBBBBB', transition: 'color 0.15s ease' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#BBBBBB')}
+                  >
+                    ← back
+                  </button>
+                ) : <div />}
+                <p className="text-xs" style={{ color: '#CCCCCC' }}>
+                  enter to send · be yourself
+                </p>
+              </div>
             </div>
           )}
         </div>
