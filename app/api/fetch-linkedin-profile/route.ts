@@ -23,11 +23,11 @@ export async function POST(request: NextRequest) {
     const profileUrl = url.startsWith('http') ? url : `https://${url}`;
 
     const res = await fetch(
-      `https://fresh-linkedin-scraper-api.p.rapidapi.com/api/v1/user/profile?linkedin_url=${encodeURIComponent(profileUrl)}`,
+      `https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile?linkedin_url=${encodeURIComponent(profileUrl)}`,
       {
         headers: {
           'x-rapidapi-key': rapidApiKey,
-          'x-rapidapi-host': 'fresh-linkedin-scraper-api.p.rapidapi.com',
+          'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
         },
       }
     );
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json();
 
-    const name = data.full_name || data.name || '';
+    const name = data.full_name || data.firstName && `${data.firstName} ${data.lastName || ''}`.trim() || '';
     const headline = data.headline || data.occupation || '';
     const about = data.summary || data.about || '';
     const location = data.location || data.city || '';

@@ -18,7 +18,11 @@
       "WebFetch(domain:www.zenrows.com)",
       "WebFetch(domain:documentation.scrapin.io)",
       "WebFetch(domain:saleleads.ai)",
-      "WebFetch(domain:docs.brightdata.com)"
+      "WebFetch(domain:docs.brightdata.com)",
+      "WebFetch(domain:rapidapi.com)",
+      "WebFetch(domain:www.unipile.com)",
+      "WebFetch(domain:blog.futuresmart.ai)",
+      "Bash(curl -s \"https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile?linkedin_url=https://www.linkedin.com/in/williamhgates/\" -H \"x-rapidapi-key: 3a820598c0mshdca6ac491507bddp1a0faajsn71755057e049\" -H \"x-rapidapi-host: fresh-linkedin-profile-data.p.rapidapi.com\")"
     ]
   }
 }
