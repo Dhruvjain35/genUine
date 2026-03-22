@@ -11,7 +11,14 @@
       "Bash(ls \"C:/Users/PRO/Claude XD/genuine-mvp/.env\"*)",
       "Bash(printenv)",
       "Bash(printenv ANTHROPIC_API_KEY)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebSearch",
+      "WebFetch(domain:www.scrapin.io)",
+      "WebFetch(domain:apify.com)",
+      "WebFetch(domain:www.zenrows.com)",
+      "WebFetch(domain:documentation.scrapin.io)",
+      "WebFetch(domain:saleleads.ai)",
+      "WebFetch(domain:docs.brightdata.com)"
     ]
   }
 }

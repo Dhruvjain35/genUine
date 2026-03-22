@@ -14,6 +14,7 @@ interface VoiceProfile {
   overallStyle?: string;
   examples?: string[];
   skipped?: boolean;
+  [key: string]: string | string[] | boolean | undefined;
 }
 
 interface VoiceCaptureProps {
