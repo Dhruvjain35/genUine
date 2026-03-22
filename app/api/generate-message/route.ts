@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
 
     // Validation
     const validExamples = (userExamples || []).filter((ex: string) => ex?.trim().length > 10);
-    if (validExamples.length < 1) {
+    // Allow no examples if user skipped voice setup and provided a tone
+    if (validExamples.length < 1 && !tone) {
       return NextResponse.json({ error: 'Please provide at least one message example so genUine can learn your voice.' }, { status: 400 });
     }
 
@@ -114,9 +115,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please fill in at least the name and headline of the person you want to message.' }, { status: 400 });
     }
 
-    const userMessage = `Here are ${userName ? userName + "'s" : 'the user\'s'} own messages (their voice to clone — study these carefully):
+    const voiceSection = validExamples.length > 0
+      ? `Here are ${userName ? userName + "'s" : 'the user\'s'} own messages (their voice to clone — study these carefully):\n\n${validExamples.map((ex: string, i: number) => `Example ${i + 1}:\n${ex.trim()}`).join('\n\n')}`
+      : `No voice examples provided. Write in a ${tone || 'natural'} tone — keep it human, warm, and not AI-sounding.`;
 
-${validExamples.map((ex: string, i: number) => `Example ${i + 1}:\n${ex.trim()}`).join('\n\n')}
+    const userMessage = `${voiceSection}
 
 ---
 

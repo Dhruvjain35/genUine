@@ -1,16 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import VoiceCapture from '../components/VoiceCapture';
 
 // ── Types ──────────────────────────────────────────────
 
 interface VoiceProfile {
-  tone: string;
-  energy: string;
-  style: string;
-  pattern: string;
+  tone?: string;
+  energy?: string;
+  style?: string;
+  pattern?: string;
+  overallStyle?: string;
   examples?: string[];
+  skipped?: boolean;
+  [key: string]: string | string[] | boolean | undefined;
 }
 
 interface MessageResult {
@@ -19,13 +23,6 @@ interface MessageResult {
   messageB: { text: string; angle: string; curiosityPoint: string };
 }
 
-interface ProfileForm {
-  name: string;
-  headline: string;
-  about: string;
-  activity: string;
-  other: string;
-}
 
 const RECIPIENT_TYPES = [
   { value: 'founder', label: 'founder / entrepreneur' },
@@ -303,15 +300,17 @@ function ResultCards({ result, onTryAgain }: { result: MessageResult; onTryAgain
 
 export default function AppPage() {
   const [phase, setPhase] = useState<'loading' | 'voice-setup' | 'generator' | 'results' | 'limit'>('loading');
-  const [voiceStep, setVoiceStep] = useState(1);
-  const [voiceExamples, setVoiceExamples] = useState<string[]>(['', '', '']);
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
   const [userName, setUserName] = useState('');
   const [messagesUsed, setMessagesUsed] = useState(0);
   const [isPro, setIsPro] = useState(false);
 
   // Generator form
-  const [profile, setProfile] = useState<ProfileForm>({ name: '', headline: '', about: '', activity: '', other: '' });
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+  const [fetchedPreview, setFetchedPreview] = useState<{ name: string; headline: string; about: string; location: string; profilePicUrl: string | null } | null>(null);
+  const [rawProfile, setRawProfile] = useState('');
   const [recipientType, setRecipientType] = useState('');
   const [tone, setTone] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
@@ -320,8 +319,6 @@ export default function AppPage() {
   const [result, setResult] = useState<MessageResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const messagesRemaining = isPro ? Infinity : Math.max(0, FREE_LIMIT - messagesUsed);
 
@@ -366,46 +363,25 @@ export default function AppPage() {
     }
   }, []);
 
-  // ── Voice setup handlers ──
+  // ── Voice capture handlers ──
 
-  const handleVoiceNext = () => {
-    if (voiceStep < 3) {
-      setVoiceStep((s) => s + 1);
-      setTimeout(() => textareaRef.current?.focus(), 100);
-    } else {
-      handleSaveVoice();
-    }
+  const handleVoiceCaptureComplete = (profile: VoiceProfile, examples: string[]) => {
+    const full = { ...profile, examples };
+    setVoiceProfile(full);
+    localStorage.setItem('genuine_voice_profile', JSON.stringify(full));
+    setPhase('generator');
   };
 
-  const handleVoiceBack = () => {
-    if (voiceStep > 1) setVoiceStep((s) => s - 1);
-  };
-
-  const handleSaveVoice = async () => {
-    const valid = voiceExamples.filter((e) => e.trim().length > 5);
-    if (valid.length === 0) return;
-
-    setPhase('loading');
-    try {
-      const res = await fetch('/api/analyze-voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examples: valid }),
-      });
-      if (res.ok) {
-        const profile = await res.json();
-        const full = { ...profile, examples: valid };
-        setVoiceProfile(full);
-        localStorage.setItem('genuine_voice_profile', JSON.stringify(full));
-      }
-    } catch { /* use examples without analysis */ }
+  const handleSkipVoice = (skipTone: string) => {
+    const minimalProfile: VoiceProfile = { tone: skipTone, overallStyle: `${skipTone} tone`, skipped: true } as VoiceProfile;
+    setVoiceProfile(minimalProfile);
+    setTone(skipTone);
+    localStorage.setItem('genuine_voice_profile', JSON.stringify(minimalProfile));
     setPhase('generator');
   };
 
   const handleClearVoice = () => {
     setVoiceProfile(null);
-    setVoiceExamples(['', '', '']);
-    setVoiceStep(1);
     localStorage.removeItem('genuine_voice_profile');
     setPhase('voice-setup');
   };
@@ -413,8 +389,8 @@ export default function AppPage() {
   // ── Message generation ──
 
   const handleGenerate = useCallback(async () => {
-    if (!profile.name.trim() && !profile.headline.trim()) {
-      setError('fill in at least the name and headline.');
+    if (!rawProfile.trim()) {
+      setError('paste their linkedin profile first.');
       return;
     }
     if (messagesRemaining <= 0) { setPhase('limit'); return; }
@@ -423,13 +399,13 @@ export default function AppPage() {
     setIsGenerating(true);
 
     try {
-      const examples = voiceProfile?.examples || voiceExamples.filter(e => e.trim());
+      const examples = voiceProfile?.examples || [];
       const res = await fetch('/api/generate-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userExamples: examples,
-          targetProfile: profile,
+          targetProfile: rawProfile,
           userName: userName || undefined,
           recipientType: recipientType || undefined,
           tone: tone || undefined,
@@ -450,12 +426,37 @@ export default function AppPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [profile, voiceProfile, voiceExamples, userName, recipientType, tone, additionalContext, messagesUsed, messagesRemaining]);
+  }, [rawProfile, voiceProfile, userName, recipientType, tone, additionalContext, messagesUsed, messagesRemaining]);
 
   const handleTryAgain = () => {
     setResult(null);
     setError('');
     setPhase('generator');
+  };
+
+  const handleFetchProfile = async () => {
+    if (!linkedinUrl.trim()) return;
+    setIsFetching(true);
+    setFetchError('');
+    setFetchedPreview(null);
+    try {
+      const res = await fetch('/api/fetch-linkedin-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: linkedinUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFetchError(data.error || 'failed to fetch profile.');
+      } else {
+        setRawProfile(data.rawProfile);
+        setFetchedPreview(data.preview);
+      }
+    } catch {
+      setFetchError('something went wrong. check the url and try again.');
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   // ── Field helpers ──
@@ -531,14 +532,6 @@ export default function AppPage() {
   // ── Render: Voice Setup ──
 
   if (phase === 'voice-setup') {
-    const VOICE_PROMPTS = [
-      { title: 'paste a message you\'ve sent on linkedin', hint: 'anything casual works. even a quick "congrats!" is great.' },
-      { title: 'paste another one', hint: 'variety helps. try a different kind of message if you can.' },
-      { title: 'one more and you\'re done', hint: 'pick one where you felt like yourself, not where you were trying to impress.' },
-    ];
-    const current = VOICE_PROMPTS[voiceStep - 1];
-    const hasInput = voiceExamples[voiceStep - 1]?.trim().length > 0;
-
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', flexDirection: 'column' }}>
         {/* Mini header */}
@@ -551,99 +544,12 @@ export default function AppPage() {
         </div>
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-          <div style={{ width: '100%', maxWidth: '500px' }}>
-            {/* Progress */}
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '40px' }}>
-              {[1, 2, 3].map((n) => (
-                <div key={n} style={{ flex: n === voiceStep ? 2 : 1, height: 4, borderRadius: 2, backgroundColor: n <= voiceStep ? '#C4784A' : '#E8DDD5', opacity: n < voiceStep ? 0.5 : 1, transition: 'flex 0.4s ease, background-color 0.3s ease' }} />
-              ))}
-            </div>
-
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              step {voiceStep} of 3
-            </p>
-
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '24px', color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '8px', lineHeight: 1.3 }}>
-              {voiceStep === 1 ? 'first, let\'s learn how you talk' : current.title}
-            </h1>
-
-            <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '24px', lineHeight: 1.6 }}>
-              {current.hint}
-            </p>
-
-            {/* Show previous answers */}
-            {voiceExamples.slice(0, voiceStep - 1).filter(e => e.trim()).map((ex, i) => (
-              <div key={i} style={{ marginBottom: '12px', padding: '10px 14px', backgroundColor: 'rgba(196, 120, 74, 0.06)', border: '1px solid rgba(196, 120, 74, 0.12)', borderRadius: '10px', fontSize: '13px', color: '#6B5E52', lineHeight: 1.5 }}>
-                <span style={{ fontSize: '10px', color: '#A08C7C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '3px' }}>example {i + 1}</span>
-                {ex.length > 120 ? ex.slice(0, 120) + '...' : ex}
-              </div>
-            ))}
-
-            <textarea
-              key={voiceStep}
-              ref={textareaRef}
-              value={voiceExamples[voiceStep - 1]}
-              onChange={(e) => {
-                const updated = [...voiceExamples];
-                updated[voiceStep - 1] = e.target.value;
-                setVoiceExamples(updated);
-              }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && e.metaKey) handleVoiceNext(); }}
-              placeholder={`paste a linkedin message you've sent before...\n\nanything from "hey congrats!" to a full outreach message works.`}
-              rows={5}
-              autoFocus
-              style={{
-                ...fieldStyle,
-                resize: 'vertical', minHeight: '120px', marginBottom: '16px',
-              }}
-              onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-            />
-
-            {/* Name field on step 1 */}
-            {voiceStep === 1 && (
-              <div style={{ marginBottom: '16px' }}>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => { setUserName(e.target.value); localStorage.setItem('genuine_user_name', e.target.value); }}
-                  placeholder="your first name (optional)"
-                  style={{ ...fieldStyle, resize: undefined }}
-                  onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {voiceStep > 1 ? (
-                <button
-                  onClick={handleVoiceBack}
-                  style={{ fontSize: '13px', color: '#A08C7C', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: 'color 0.15s' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#6B5E52'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#A08C7C'}
-                >
-                  ← back
-                </button>
-              ) : <div />}
-
-              <button
-                onClick={handleVoiceNext}
-                disabled={!hasInput}
-                className="btn-primary"
-                style={{
-                  padding: '12px 28px', borderRadius: '12px', fontSize: '14px',
-                  opacity: hasInput ? 1 : 0.4, cursor: hasInput ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {voiceStep === 3 ? 'save my voice ✓' : 'next →'}
-              </button>
-            </div>
-
-            <p style={{ fontSize: '12px', color: '#C4784A', textAlign: 'center', marginTop: '20px' }}>
-              ⌘ + enter to continue
-            </p>
-          </div>
+          <VoiceCapture
+            userName={userName}
+            onNameChange={(name) => { setUserName(name); localStorage.setItem('genuine_user_name', name); }}
+            onComplete={handleVoiceCaptureComplete}
+            onSkip={handleSkipVoice}
+          />
         </div>
       </div>
     );
@@ -698,76 +604,114 @@ export default function AppPage() {
               who do you want to message?
             </h2>
             <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '32px', lineHeight: 1.6 }}>
-              paste their linkedin info below. grab their name, headline, and about — even a messy copy works.
+              drop their linkedin link and we&apos;ll do the rest.
             </p>
 
+            {/* URL input card */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '28px', border: '1px solid rgba(196, 120, 74, 0.12)', boxShadow: '0 4px 24px rgba(196, 120, 74, 0.06)', marginBottom: '20px' }}>
-              {/* Name + Headline row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>name *</label>
-                  <input
-                    type="text" value={profile.name}
-                    onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
-                    placeholder="Sarah Chen"
-                    style={{ ...fieldStyle, resize: undefined }}
-                    onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>headline *</label>
-                  <input
-                    type="text" value={profile.headline}
-                    onChange={(e) => setProfile(p => ({ ...p, headline: e.target.value }))}
-                    placeholder="Product Manager @ Stripe | Ex-Google"
-                    style={{ ...fieldStyle, resize: undefined }}
-                    onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-                  />
-                </div>
-              </div>
-
-              {/* About */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>about section <span style={{ color: '#A08C7C', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>optional but really helpful</span></label>
-                <textarea
-                  value={profile.about}
-                  onChange={(e) => setProfile(p => ({ ...p, about: e.target.value }))}
-                  placeholder="paste their about section here... even fragments work"
-                  rows={3}
-                  style={{ ...fieldStyle, resize: 'vertical' }}
-                  onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-
-              {/* Recent activity */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>recent posts or activity <span style={{ color: '#A08C7C', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>optional</span></label>
-                <textarea
-                  value={profile.activity}
-                  onChange={(e) => setProfile(p => ({ ...p, activity: e.target.value }))}
-                  placeholder="any recent posts, comments, or notable projects..."
-                  rows={2}
-                  style={{ ...fieldStyle, resize: 'vertical' }}
-                  onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
-                />
-              </div>
-
-              {/* Extra context */}
-              <div>
-                <label style={labelStyle}>anything else? <span style={{ color: '#A08C7C', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>optional</span></label>
+              <label style={labelStyle}>linkedin profile url</label>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: fetchError ? '10px' : '0' }}>
                 <input
-                  type="text" value={profile.other}
-                  onChange={(e) => setProfile(p => ({ ...p, other: e.target.value }))}
-                  placeholder="we go to the same school, mutual connection, saw their talk at..."
-                  style={{ ...fieldStyle, resize: undefined }}
+                  type="text"
+                  value={linkedinUrl}
+                  onChange={(e) => { setLinkedinUrl(e.target.value); setFetchedPreview(null); setFetchError(''); setRawProfile(''); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleFetchProfile(); }}
+                  placeholder="linkedin.com/in/username"
+                  style={{ ...fieldStyle, flex: 1, resize: undefined }}
                   onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
                   onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
                 />
+                <button
+                  onClick={handleFetchProfile}
+                  disabled={isFetching || !linkedinUrl.trim()}
+                  className="btn-primary"
+                  style={{
+                    padding: '0 20px', borderRadius: '12px', fontSize: '14px', whiteSpace: 'nowrap',
+                    opacity: isFetching || !linkedinUrl.trim() ? 0.5 : 1,
+                    cursor: isFetching || !linkedinUrl.trim() ? 'not-allowed' : 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isFetching ? (
+                    <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
+                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
+                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
+                    </span>
+                  ) : 'fetch →'}
+                </button>
               </div>
+
+              {/* Fetch error */}
+              {fetchError && (
+                <p style={{ fontSize: '13px', color: '#C4784A', marginTop: '8px' }}>{fetchError}</p>
+              )}
+
+              {/* Fetched profile preview */}
+              {fetchedPreview && (
+                <div
+                  style={{
+                    marginTop: '16px', padding: '16px', borderRadius: '14px',
+                    backgroundColor: 'rgba(196, 120, 74, 0.05)',
+                    border: '1px solid rgba(196, 120, 74, 0.15)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: fetchedPreview.about ? '10px' : '0' }}>
+                    {fetchedPreview.profilePicUrl ? (
+                      <img
+                        src={fetchedPreview.profilePicUrl}
+                        alt={fetchedPreview.name}
+                        style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                      />
+                    ) : (
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '18px', color: '#C4784A' }}>
+                          {fetchedPreview.name?.[0] || '?'}
+                        </span>
+                      </div>
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#2D2D2D', marginBottom: '2px' }}>
+                        {fetchedPreview.name}
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#6B5E52', lineHeight: 1.4 }}>
+                        {fetchedPreview.headline}
+                      </p>
+                      {fetchedPreview.location && (
+                        <p style={{ fontSize: '11px', color: '#A08C7C', marginTop: '2px' }}>{fetchedPreview.location}</p>
+                      )}
+                    </div>
+                    <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                      <span style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, backgroundColor: 'rgba(196, 120, 74, 0.1)', padding: '3px 10px', borderRadius: '100px' }}>
+                        ✓ got it
+                      </span>
+                    </div>
+                  </div>
+                  {fetchedPreview.about && (
+                    <p style={{ fontSize: '12px', color: '#A08C7C', lineHeight: 1.6, marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(196, 120, 74, 0.1)' }}>
+                      {fetchedPreview.about}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback: paste manually */}
+              {(fetchError || (!fetchedPreview && !isFetching)) && (
+                <div style={{ marginTop: fetchError ? '16px' : '20px', paddingTop: '16px', borderTop: '1px solid rgba(196, 120, 74, 0.08)' }}>
+                  <p style={{ fontSize: '12px', color: '#A08C7C', marginBottom: '10px' }}>
+                    {fetchError ? 'or paste their info manually:' : 'no url? paste their info instead:'}
+                  </p>
+                  <textarea
+                    value={rawProfile}
+                    onChange={(e) => setRawProfile(e.target.value)}
+                    placeholder={"Sarah Chen\nProduct Manager @ Stripe\n\nAbout: I've spent the last 5 years building..."}
+                    rows={5}
+                    style={{ ...fieldStyle, resize: 'vertical', minHeight: '100px' }}
+                    onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Options row */}
@@ -841,12 +785,12 @@ export default function AppPage() {
 
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || (!profile.name.trim() && !profile.headline.trim())}
+              disabled={isGenerating || !rawProfile.trim()}
               className="btn-primary"
               style={{
                 width: '100%', padding: '16px', borderRadius: '14px', fontSize: '16px',
-                opacity: isGenerating || (!profile.name.trim() && !profile.headline.trim()) ? 0.5 : 1,
-                cursor: isGenerating || (!profile.name.trim() && !profile.headline.trim()) ? 'not-allowed' : 'pointer',
+                opacity: isGenerating || !rawProfile.trim() ? 0.5 : 1,
+                cursor: isGenerating || !rawProfile.trim() ? 'not-allowed' : 'pointer',
               }}
             >
               {isGenerating ? (
