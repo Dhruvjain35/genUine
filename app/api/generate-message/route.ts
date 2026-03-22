@@ -1,180 +1,167 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-interface GenerateMessageRequest {
-  userExamples: string[];
-  targetProfile: string;
-  userName: string;
-}
+const systemPrompt = `You are genUine's voice-matching engine. Your ONLY purpose is to generate LinkedIn messages that are INDISTINGUISHABLE from messages the user would write themselves.
 
-interface MessageResponse {
-  messageA: {
-    text: string;
-    angle: string;
-  };
-  messageB: {
-    text: string;
-    angle: string;
-  };
-  styleNotes: string;
-}
+CRITICAL RULE: You must COMPLETELY ABANDON your default Claude writing style. Do not write like Claude. Do not write like an AI assistant. Do not write in a "helpful" tone. You are CLONING the user's exact voice.
 
-const systemPrompt = `You are genUine's message generation engine. Your job is to write a LinkedIn opening message that sounds EXACTLY like the user — not like AI, not like a template, not like a "professional."
+## Voice Analysis — Study EVERY example for ALL of these:
 
-## How to analyze the user's style
+CAPITALIZATION: All lowercase? Proper case? Random? Mixed?
+SENTENCE LENGTH: Short punchy fragments? Long flowing? Mixed?
+PUNCTUATION: Lots of "!"? Minimal? Double "??"? None at all?
+EMOJI USAGE: Which ones, where, how often, or never?
+GREETING STYLE: "hey", "hi", "yo", "omg", "heyyy", nothing?
+SIGN-OFF STYLE: How they end messages — abrupt, trailing, question?
+SLANG: "u" vs "you", "cuz", "ngl", "tbh", "lol", "lowk"?
+FORMALITY: Super casual? Slightly professional? Somewhere between?
+QUESTION STYLE: Direct? Rhetorical? Trailing "..."?
+FILLER WORDS: "honestly", "like", "literally", "basically", "kinda"?
+ENERGY: Enthusiastic? Chill? Curious? Direct? Warm?
+UNIQUE PATTERNS: Any phrases, habits, or structures only THIS person uses?
 
-Look at the examples they provided and identify:
-- Do they use lowercase or proper capitalization?
-- How long are their sentences? Short and punchy or longer and flowing?
-- Do they use emojis? Which ones?
-- Do they use exclamation marks? How often?
-- What's their greeting style? (hey, hi, yo, what's up, etc.)
-- Do they ask questions or make statements?
-- Are they casual or slightly formal?
-- Do they use slang or abbreviations?
-- What's their sign-off style?
-- What's the overall energy? (enthusiastic, chill, curious, direct)
+YOU MUST MATCH ALL OF THESE. If they write in all lowercase, you write in all lowercase. If they use "!!" you use "!!". If they never use emojis, NEVER use emojis. If they write in proper case with full sentences, match that exactly.
 
-## How to analyze the target profile
-
-Look at the target person's profile and identify:
-- What they're currently working on
-- Their background and experience
-- Any shared interests, schools, locations, or connections with the user
+## Profile Analysis — Extract from whatever is pasted:
+- Name and current role
+- Company and what they're working on right now
+- Background that creates natural common ground
 - Something genuinely interesting or unique about them
-- Something the user could authentically be curious about
+- A conversation starter that doesn't feel researched
+- Recent activity or achievements if mentioned
 
-## Message rules
+## Recipient Context Adjustment (keep the user's voice, just adjust the approach):
+- founder/entrepreneur: peer energy, building mindset, talk shop
+- student/peer: casual, relatable, shared experience angle
+- professional/executive: user's voice but slightly more considered
+- professor/mentor: genuine curiosity about their work and research
+- other: default casual and curious
 
-1. Sound EXACTLY like the user's examples. Match their tone, vocabulary, sentence length, capitalization, and energy.
-2. Keep it under 5 sentences
-3. NEVER use "I hope this message finds you well" or any variation
-4. NEVER pitch anything in the first message
-5. NEVER use corporate language
-6. Lead with either common ground OR genuine curiosity — pick whichever feels more natural
-7. Make it something the user would actually send — if it sounds like AI wrote it, rewrite it
-8. Don't mention that you analyzed their profile — make it feel natural
-9. End in a way that invites a response (usually a question)
+## STRICT MESSAGE RULES:
+1. Sound EXACTLY like the user. Re-read every example before writing.
+2. Maximum 4 sentences. Shorter is almost always better.
+3. NEVER use these phrases (or any variation):
+   "I hope this message finds you well"
+   "I came across your profile"
+   "I'd love to pick your brain"
+   "I noticed that you"
+   "Your background is impressive"
+   "I'm reaching out because"
+   "I'd love to connect"
+   "I wanted to reach out"
+4. NEVER use em dashes (—) or en dashes (–). Use commas or periods instead.
+5. NEVER use bullet points or hyphens in the message text.
+6. NEVER pitch anything. This is the START of a conversation.
+7. NEVER use corporate language unless the user's examples are formal.
+8. Lead with common ground OR genuine curiosity — whichever fits more naturally.
+9. Don't make it obvious you researched them. Weave details in naturally.
+10. End with something that genuinely invites a response. Not "let me know if you'd like to connect."
+11. If the output could have been written by any AI chatbot, REWRITE IT until only this specific user could have written it.
+12. Apply the requested tone if one is specified (casual/formal/curious) while keeping the user's voice.
 
-## Output format
+## Output Format
 
-Return ONLY a JSON object with this structure (no markdown, no backticks, no explanation):
+Return ONLY valid JSON. No markdown. No backticks. No explanation before or after:
 {
+  "voiceProfile": {
+    "tone": "1-2 words describing their tone",
+    "energy": "1-2 words describing their energy level",
+    "style": "one sentence describing their specific writing style",
+    "pattern": "one specific pattern you noticed — e.g. always uses lowercase, ends with questions, uses 'lol' naturally"
+  },
   "messageA": {
-    "text": "the message using common ground angle",
-    "angle": "brief note on why this angle works"
+    "text": "the message — common ground angle, in the user's exact voice",
+    "angle": "one sentence: why this angle works for this specific person",
+    "commonGround": "the shared element you found"
   },
   "messageB": {
-    "text": "the message using genuine curiosity angle",
-    "angle": "brief note on why this angle works"
-  },
-  "styleNotes": "1-2 sentences about what you noticed in the user's writing style"
+    "text": "the message — genuine curiosity angle, in the user's exact voice",
+    "angle": "one sentence: why this angle works for this specific person",
+    "curiosityPoint": "what sparked genuine curiosity about them"
+  }
 }`;
+
+function stripEmDashes(text: string): string {
+  return text
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/\s*–\s*/g, ', ')
+    .replace(/\s*-{2,}\s*/g, ', ');
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body: GenerateMessageRequest = await request.json();
+    const body = await request.json();
+    const { userExamples, targetProfile, userName, recipientType, tone, additionalContext } = body;
 
     // Validation
-    if (!body.userExamples || body.userExamples.length < 2) {
-      return NextResponse.json(
-        { error: 'Please provide at least 2 examples of messages you\'ve written.' },
-        { status: 400 }
-      );
+    const validExamples = (userExamples || []).filter((ex: string) => ex?.trim().length > 10);
+    if (validExamples.length < 1) {
+      return NextResponse.json({ error: 'Please provide at least one message example so genUine can learn your voice.' }, { status: 400 });
     }
 
-    if (!body.targetProfile || body.targetProfile.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Please paste the target LinkedIn profile.' },
-        { status: 400 }
-      );
+    const profileText = [
+      targetProfile?.name ? `Name: ${targetProfile.name}` : '',
+      targetProfile?.headline ? `Headline: ${targetProfile.headline}` : '',
+      targetProfile?.about ? `About: ${targetProfile.about}` : '',
+      targetProfile?.activity ? `Recent activity: ${targetProfile.activity}` : '',
+      targetProfile?.other ? `Other context: ${targetProfile.other}` : '',
+      typeof targetProfile === 'string' ? targetProfile : '',
+    ].filter(Boolean).join('\n');
+
+    if (!profileText.trim()) {
+      return NextResponse.json({ error: 'Please fill in at least the name and headline of the person you want to message.' }, { status: 400 });
     }
 
-    if (!body.userName || body.userName.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Please provide your first name.' },
-        { status: 400 }
-      );
-    }
+    const userMessage = `Here are ${userName ? userName + "'s" : 'the user\'s'} own messages (their voice to clone — study these carefully):
 
-    // Filter out empty examples
-    const validExamples = body.userExamples.filter((ex) => ex.trim().length > 0);
-
-    if (validExamples.length < 2) {
-      return NextResponse.json(
-        { error: 'Please provide at least 2 examples of messages you\'ve written.' },
-        { status: 400 }
-      );
-    }
-
-    // Build the user message
-    const userMessage = `
-Here are the messages the user ${body.userName} has written (their voice to analyze):
-
-${validExamples.map((ex, i) => `Example ${i + 1}:\n${ex}`).join('\n\n')}
+${validExamples.map((ex: string, i: number) => `Example ${i + 1}:\n${ex.trim()}`).join('\n\n')}
 
 ---
 
-Here's the target LinkedIn profile they want to reach:
+Target person's LinkedIn profile:
+${profileText}
 
-${body.targetProfile}
+${recipientType ? `Who they are: ${recipientType}` : ''}
+${tone ? `Requested tone: ${tone}` : ''}
+${additionalContext ? `Additional context from the user: ${additionalContext}` : ''}
 
 ---
 
-Now generate two different LinkedIn opening messages that sound EXACTLY like ${body.userName} would write, analyzing their style from the examples above. Return ONLY valid JSON (no markdown, no explanation).`;
+Generate two LinkedIn opening messages that sound EXACTLY like ${userName || 'the user'} would write. Return ONLY valid JSON.`;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
+      max_tokens: 1200,
       system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
     });
 
-    // Extract text response
-    const responseText =
-      message.content[0].type === 'text' ? message.content[0].text : '';
+    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
-    // Parse JSON response
-    let parsedResponse: MessageResponse;
+    // Parse JSON — handle markdown wrapping
+    let parsed: any;
     try {
-      // Try to extract JSON if wrapped in markdown
-      const jsonMatch = responseText.match(/```json\n?([\s\S]*?)\n?```/) || responseText.match(/({[\s\S]*})/);
-      const jsonString = jsonMatch ? jsonMatch[1] : responseText;
-      parsedResponse = JSON.parse(jsonString);
-    } catch (_error) {
-      return NextResponse.json(
-        { error: 'hmm, something went wrong generating the messages — try again?' },
-        { status: 500 }
-      );
+      const jsonMatch = responseText.match(/```(?:json)?\n?([\s\S]*?)\n?```/) || responseText.match(/(\{[\s\S]*\})/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : responseText;
+      parsed = JSON.parse(jsonStr.trim());
+    } catch {
+      return NextResponse.json({ error: 'Something went wrong generating the messages. Try again?' }, { status: 500 });
     }
 
-    // Validate response structure
-    if (
-      !parsedResponse.messageA?.text ||
-      !parsedResponse.messageB?.text ||
-      !parsedResponse.styleNotes
-    ) {
-      return NextResponse.json(
-        { error: 'hmm, something went wrong generating the messages — try again?' },
-        { status: 500 }
-      );
+    // Validate
+    if (!parsed.messageA?.text || !parsed.messageB?.text) {
+      return NextResponse.json({ error: 'Something went wrong generating the messages. Try again?' }, { status: 500 });
     }
 
-    return NextResponse.json(parsedResponse);
+    // Post-process: strip em dashes
+    parsed.messageA.text = stripEmDashes(parsed.messageA.text);
+    parsed.messageB.text = stripEmDashes(parsed.messageB.text);
+
+    return NextResponse.json(parsed);
   } catch (error) {
-    console.error('Error generating message:', error);
-    return NextResponse.json(
-      { error: 'hmm, something went wrong — try again?' },
-      { status: 500 }
-    );
+    console.error('generate-message error:', error);
+    return NextResponse.json({ error: 'Something went wrong. Try again?' }, { status: 500 });
   }
 }

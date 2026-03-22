@@ -3,17 +3,23 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'genUine — your message. not ai\'s.',
-  description: 'Generate personalized LinkedIn messages in your own voice using AI that learns your writing style.',
+  description: 'genUine learns how you write, then helps you start LinkedIn conversations that actually sound like you — not like AI.',
   openGraph: {
+    title: 'genUine — your message. not ai\'s.',
+    description: 'LinkedIn messages that sound like you. Not like AI.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'genUine',
-    description: 'your message. not ai\'s.',
+    description: 'LinkedIn messages that sound like you. Not like AI.',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ backgroundColor: '#FFFFFF', color: '#1F1F1F', overflow: 'hidden' }}>
+      <body style={{ color: '#2D2D2D' }}>
         {children}
       </body>
     </html>
