@@ -22,7 +22,22 @@
       "WebFetch(domain:rapidapi.com)",
       "WebFetch(domain:www.unipile.com)",
       "WebFetch(domain:blog.futuresmart.ai)",
-      "Bash(curl -s \"https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile?linkedin_url=https://www.linkedin.com/in/williamhgates/\" -H \"x-rapidapi-key: 3a820598c0mshdca6ac491507bddp1a0faajsn71755057e049\" -H \"x-rapidapi-host: fresh-linkedin-profile-data.p.rapidapi.com\")"
+      "Bash(curl -s \"https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile?linkedin_url=https://www.linkedin.com/in/williamhgates/\" -H \"x-rapidapi-key: 3a820598c0mshdca6ac491507bddp1a0faajsn71755057e049\" -H \"x-rapidapi-host: fresh-linkedin-profile-data.p.rapidapi.com\")",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:3000/dashboard)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /PID 25044 /F)",
+      "Bash(cmd.exe /c \"taskkill /PID 25044 /F\")",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")",
+      "Bash(cmd.exe /c \"for /f \"\"tokens=5\"\" %a in \\(''netstat -ano ^| findstr :3000''\\) do taskkill /PID %a /F\")",
+      "Bash(cmd.exe /c \"powershell -command \"\"Test-NetConnection -ComputerName localhost -Port 3000 -InformationLevel Quiet\"\"\")",
+      "Bash(cmd.exe /c \"powershell -command \"\"\\(Test-NetConnection -ComputerName localhost -Port 3000\\).TcpTestSucceeded\"\"\")",
+      "Bash(cmd.exe /c \"powershell -command \"\"\\(Test-NetConnection -ComputerName localhost -Port 3000\\).TcpTestSucceeded\"\" 2>&1\")",
+      "Bash(powershell -command \"\\(Test-NetConnection -ComputerName localhost -Port 3000\\).TcpTestSucceeded\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(powershell -command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object LocalPort,State,OwningProcess\")",
+      "Bash(powershell -command \"Stop-Process -Id 25044 -Force; Start-Sleep 2; Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue\")"
     ]
   }
 }

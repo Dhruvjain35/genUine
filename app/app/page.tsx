@@ -299,11 +299,13 @@ function ResultCards({ result, onTryAgain }: { result: MessageResult; onTryAgain
 // ── Main App Page ───────────────────────────────────────
 
 export default function AppPage() {
-  const [phase, setPhase] = useState<'loading' | 'voice-setup' | 'generator' | 'results' | 'limit'>('loading');
+  const [phase, setPhase] = useState<'loading' | 'voice-setup' | 'voice-confirm' | 'generator' | 'results' | 'limit'>('loading');
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
+  const [pendingVoiceProfile, setPendingVoiceProfile] = useState<VoiceProfile | null>(null);
   const [userName, setUserName] = useState('');
   const [messagesUsed, setMessagesUsed] = useState(0);
   const [isPro, setIsPro] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Generator form
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -320,7 +322,7 @@ export default function AppPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const messagesRemaining = isPro ? Infinity : Math.max(0, FREE_LIMIT - messagesUsed);
+  const messagesRemaining = (isPro || isAdmin) ? Infinity : Math.max(0, FREE_LIMIT - messagesUsed);
 
   // ── Load persisted state ──
   useEffect(() => {
@@ -330,6 +332,7 @@ export default function AppPage() {
       const savedCount = localStorage.getItem('genuine_messages_today');
       const savedDate = localStorage.getItem('genuine_last_reset_date');
       const savedPro = localStorage.getItem('genuine_is_pro');
+      const savedAdmin = localStorage.getItem('genuine_admin');
 
       const today = new Date().toDateString();
       if (savedDate !== today) {
@@ -341,6 +344,7 @@ export default function AppPage() {
       }
 
       if (savedPro === 'true') setIsPro(true);
+      if (savedAdmin === 'true') setIsAdmin(true);
       if (savedName) setUserName(savedName);
 
       if (savedProfile) {
@@ -361,15 +365,31 @@ export default function AppPage() {
     } catch {
       setPhase('voice-setup');
     }
+
+    // Listen for admin grant from SiteHeader
+    const handleAdminGrant = () => setIsAdmin(true);
+    window.addEventListener('genuine_admin_granted', handleAdminGrant);
+    return () => window.removeEventListener('genuine_admin_granted', handleAdminGrant);
   }, []);
 
   // ── Voice capture handlers ──
 
   const handleVoiceCaptureComplete = (profile: VoiceProfile, examples: string[]) => {
     const full = { ...profile, examples };
-    setVoiceProfile(full);
-    localStorage.setItem('genuine_voice_profile', JSON.stringify(full));
+    setPendingVoiceProfile(full);
+    setPhase('voice-confirm');
+  };
+
+  const handleVoiceConfirm = () => {
+    if (!pendingVoiceProfile) return;
+    setVoiceProfile(pendingVoiceProfile);
+    localStorage.setItem('genuine_voice_profile', JSON.stringify(pendingVoiceProfile));
+    setPendingVoiceProfile(null);
     setPhase('generator');
+  };
+
+  const handleVoiceAdjust = () => {
+    setPhase('voice-setup');
   };
 
   const handleSkipVoice = (skipTone: string) => {
@@ -420,6 +440,21 @@ export default function AppPage() {
       const newCount = messagesUsed + 1;
       setMessagesUsed(newCount);
       localStorage.setItem('genuine_messages_today', newCount.toString());
+
+      // Save to message history
+      try {
+        const history = JSON.parse(localStorage.getItem('genuine_message_history') || '[]');
+        history.unshift({
+          id: Date.now(),
+          date: new Date().toISOString(),
+          rawProfile: rawProfile.trim(),
+          recipientType: recipientType || null,
+          messageA: data.messageA?.text || '',
+          messageB: data.messageB?.text || '',
+        });
+        localStorage.setItem('genuine_message_history', JSON.stringify(history.slice(0, 50)));
+      } catch { /* silent */ }
+
       setPhase('results');
     } catch {
       setError('something went wrong. try again?');
@@ -555,6 +590,87 @@ export default function AppPage() {
     );
   }
 
+  // ── Render: Voice Confirmation ──
+
+  if (phase === 'voice-confirm' && pendingVoiceProfile) {
+    const vp = pendingVoiceProfile;
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(196, 120, 74, 0.08)' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '20px', color: '#2D2D2D', letterSpacing: '-0.02em' }}>
+              gen<span style={{ color: '#C4784A' }}>U</span>ine
+            </span>
+          </Link>
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+          <div className="fade-scale" style={{ width: '100%', maxWidth: '520px' }}>
+            <p style={{ fontSize: '13px', color: '#C4784A', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              voice analysis complete
+            </p>
+            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 700, color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+              here&apos;s what genUine learned about your voice
+            </h2>
+            <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '28px', lineHeight: 1.6 }}>
+              does this sound right? if not, you can go back and adjust.
+            </p>
+
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '24px', border: '1.5px solid rgba(196, 120, 74, 0.15)', boxShadow: '0 4px 24px rgba(196, 120, 74, 0.08)', marginBottom: '24px' }}>
+              {[
+                { label: 'tone', value: vp.tone },
+                { label: 'energy', value: vp.energy },
+                { label: 'style', value: vp.style || vp.overallStyle },
+                { label: 'pattern', value: vp.pattern },
+              ].filter(row => row.value).map((row) => (
+                <div
+                  key={row.label}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '12px',
+                    padding: '12px 0',
+                    borderBottom: '1px solid rgba(196, 120, 74, 0.06)',
+                  }}
+                >
+                  <span style={{
+                    fontSize: '11px', fontWeight: 700, color: '#C4784A',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    minWidth: '64px', paddingTop: '2px',
+                  }}>
+                    {row.label}
+                  </span>
+                  <span style={{ fontSize: '14px', color: '#2D2D2D', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>
+                    {String(row.value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#A08C7C', marginBottom: '20px', fontStyle: 'italic' }}>
+              looks right?
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={handleVoiceConfirm}
+                className="btn-primary"
+                style={{ flex: 1, padding: '14px', borderRadius: '14px', fontSize: '15px' }}
+              >
+                yes, let&apos;s go →
+              </button>
+              <button
+                onClick={handleVoiceAdjust}
+                className="btn-ghost"
+                style={{ padding: '14px 20px', borderRadius: '14px', fontSize: '15px' }}
+              >
+                let me adjust
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Render: Generator + Results ──
 
   return (
@@ -567,12 +683,15 @@ export default function AppPage() {
           </span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {!isPro && (
+          {isAdmin && (
+            <span title="admin mode — unlimited messages" style={{ fontSize: '14px', color: '#C4784A', opacity: 0.7, fontFamily: "'DM Sans', sans-serif" }}>∞</span>
+          )}
+          {!isPro && !isAdmin && (
             <span style={{ fontSize: '12px', color: messagesRemaining <= 1 ? '#C4784A' : '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
               {messagesRemaining} message{messagesRemaining !== 1 ? 's' : ''} left today
             </span>
           )}
-          {isPro && (
+          {isPro && !isAdmin && (
             <span style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               pro ✓
             </span>
@@ -803,8 +922,8 @@ export default function AppPage() {
             </button>
 
             <p style={{ fontSize: '12px', color: '#A08C7C', textAlign: 'center', marginTop: '12px' }}>
-              {isPro ? 'unlimited messages · pro' : `${messagesRemaining} of ${FREE_LIMIT} free messages left today`}
-              {!isPro && messagesRemaining <= 1 && (
+              {isAdmin ? '∞ messages · admin' : isPro ? 'unlimited messages · pro' : `${messagesRemaining} of ${FREE_LIMIT} free messages left today`}
+              {!isPro && !isAdmin && messagesRemaining <= 1 && (
                 <Link href="/pricing" style={{ color: '#C4784A', textDecoration: 'none', marginLeft: '6px', fontWeight: 600 }}>
                   go pro →
                 </Link>

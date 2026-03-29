@@ -1,26 +1,90 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface SiteHeaderProps {
-  activePage?: 'home' | 'app' | 'pricing' | 'about' | 'waitlist';
+  activePage?: 'home' | 'app' | 'pricing' | 'about' | 'waitlist' | 'dashboard';
 }
 
 export default function SiteHeader({ activePage }: SiteHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Admin panel state
+  const [adminInputVisible, setAdminInputVisible] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const logoClickCount = useRef(0);
+  const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const adminInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Check admin status on mount
+    if (typeof window !== 'undefined') {
+      setIsAdmin(localStorage.getItem('genuine_admin') === 'true');
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (adminInputVisible && adminInputRef.current) {
+      adminInputRef.current.focus();
+    }
+  }, [adminInputVisible]);
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    logoClickCount.current += 1;
+
+    if (logoClickCount.current === 1) {
+      // Start 3-second window
+      logoClickTimer.current = setTimeout(() => {
+        logoClickCount.current = 0;
+      }, 3000);
+    }
+
+    if (logoClickCount.current >= 5) {
+      logoClickCount.current = 0;
+      if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
+      setAdminInputVisible(true);
+      setAdminCode('');
+    }
+  };
+
+  const handleAdminSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const secret = process.env.NEXT_PUBLIC_ADMIN_SECRET_CODE || 'genuineadmin2026';
+    if (adminCode === secret) {
+      localStorage.setItem('genuine_admin', 'true');
+      setIsAdmin(true);
+      setAdminInputVisible(false);
+      setAdminCode('');
+      // Dispatch event so /app page can react
+      window.dispatchEvent(new Event('genuine_admin_granted'));
+    } else {
+      // Wrong code — disappear silently
+      setAdminInputVisible(false);
+      setAdminCode('');
+    }
+  };
+
+  const handleAdminKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setAdminInputVisible(false);
+      setAdminCode('');
+    }
+  };
 
   const navLinks = [
     { href: '/', label: 'home', page: 'home' },
     { href: '/pricing', label: 'pricing', page: 'pricing' },
     { href: '/about', label: 'about', page: 'about' },
+    { href: '/dashboard', label: 'dashboard', page: 'dashboard' },
     { href: '/waitlist', label: 'waitlist', page: 'waitlist' },
   ];
 
@@ -39,8 +103,11 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
           justifyContent: 'space-between',
         }}
       >
-        {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none' }}>
+        {/* Logo — 5-click admin trigger */}
+        <span
+          onClick={handleLogoClick}
+          style={{ textDecoration: 'none', cursor: 'pointer', userSelect: 'none' }}
+        >
           <span
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -52,7 +119,21 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
           >
             gen<span style={{ color: '#C4784A' }}>U</span>ine
           </span>
-        </Link>
+          {isAdmin && (
+            <span
+              title="admin mode"
+              style={{
+                marginLeft: '4px',
+                fontSize: '13px',
+                color: '#C4784A',
+                opacity: 0.6,
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              ∞
+            </span>
+          )}
+        </span>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
@@ -95,6 +176,43 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
           <span style={{ display: 'block', width: 22, height: 2, backgroundColor: '#2D2D2D', borderRadius: 1, transition: 'all 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
         </button>
       </div>
+
+      {/* Admin secret input */}
+      {adminInputVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '60px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            animation: 'fadeUp 0.2s ease',
+          }}
+        >
+          <form onSubmit={handleAdminSubmit}>
+            <input
+              ref={adminInputRef}
+              type="password"
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value)}
+              onKeyDown={handleAdminKeyDown}
+              onBlur={() => { setAdminInputVisible(false); setAdminCode(''); }}
+              placeholder="···"
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '13px',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(196, 120, 74, 0.3)',
+                backgroundColor: '#FAF9F7',
+                color: '#2D2D2D',
+                outline: 'none',
+                width: '140px',
+                boxShadow: '0 4px 16px rgba(196, 120, 74, 0.12)',
+              }}
+            />
+          </form>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {menuOpen && (

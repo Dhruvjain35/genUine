@@ -1,9 +1,98 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import SiteHeader from './components/SiteHeader';
 import SiteFooter from './components/SiteFooter';
 import ScrollReveal from './components/ScrollReveal';
+
+// ── Animated Counter ─────────────────────────────────────
+
+function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const duration = 1400;
+          const start = performance.now();
+          const animate = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(ease * target));
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+// ── Stats Section ────────────────────────────────────────
+
+function StatsSection() {
+  const [waitlistCount, setWaitlistCount] = useState<number>(0);
+
+  useEffect(() => {
+    fetch('/api/waitlist')
+      .then((r) => r.json())
+      .then((d) => { if (d.count) setWaitlistCount(d.count); })
+      .catch(() => {});
+  }, []);
+
+  const stats = [
+    { value: 40, suffix: '+', label: 'customer discovery conversations' },
+    { value: waitlistCount || 50, suffix: '+', label: 'people already waiting' },
+    { value: 6, suffix: '', label: 'team members and growing' },
+  ];
+
+  return (
+    <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FAF9F7' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', textAlign: 'center' }}>
+          {stats.map((s, i) => (
+            <ScrollReveal key={s.label} delay={i * 120}>
+              <div>
+                <div style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 'clamp(44px, 6vw, 64px)',
+                  letterSpacing: '-0.04em',
+                  color: '#C4784A',
+                  lineHeight: 1,
+                  marginBottom: '10px',
+                }}>
+                  <AnimatedCounter target={s.value} suffix={s.suffix} />
+                </div>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#6B5E52',
+                  fontFamily: "'DM Sans', sans-serif",
+                  lineHeight: 1.5,
+                }}>
+                  {s.label}
+                </p>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const QUOTES = [
   { quote: 'kinda shocked that it turned out that well', name: 'early user' },
@@ -444,6 +533,107 @@ export default function LandingPage() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* ── DIFFERENTIATOR ── */}
+      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#F5F0EB' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              what makes it different
+            </p>
+            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 700, letterSpacing: '-0.02em', color: '#2D2D2D', marginBottom: '8px' }}>
+              not another AI writing tool
+            </h2>
+            <p style={{ fontSize: '16px', color: '#6B5E52', maxWidth: '520px', margin: '0 auto', lineHeight: 1.7 }}>
+              other tools write messages that sound human. genUine writes messages that sound like <strong style={{ color: '#2D2D2D' }}>YOU</strong>.
+            </p>
+          </ScrollReveal>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', alignItems: 'stretch' }}>
+            {/* LEFT — generic AI */}
+            <ScrollReveal>
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid rgba(0,0,0,0.08)',
+                borderRadius: '20px',
+                padding: '28px',
+                opacity: 0.7,
+                height: '100%',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '18px' }}>✕</span>
+                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#888', textDecoration: 'line-through' }}>
+                    generic AI
+                  </span>
+                </div>
+                {[
+                  'I hope this message finds you well.',
+                  "I came across your profile and was truly impressed by your experience.",
+                  "I'd love to explore potential synergies between our work.",
+                  "I'd love to pick your brain about your journey.",
+                ].map((msg) => (
+                  <div key={msg} style={{
+                    padding: '12px 14px',
+                    marginBottom: '10px',
+                    backgroundColor: 'rgba(0,0,0,0.04)',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    color: '#888',
+                    fontFamily: "'DM Sans', sans-serif",
+                    lineHeight: 1.5,
+                    fontStyle: 'italic',
+                    textDecoration: 'line-through',
+                  }}>
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            </ScrollReveal>
+
+            {/* RIGHT — genUine */}
+            <ScrollReveal delay={100}>
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid rgba(196, 120, 74, 0.25)',
+                borderRadius: '20px',
+                padding: '28px',
+                boxShadow: '0 8px 32px rgba(196, 120, 74, 0.12)',
+                height: '100%',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <span style={{ fontSize: '18px' }}>✓</span>
+                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#C4784A' }}>
+                    gen<span style={{ textDecoration: 'none' }}>U</span>ine
+                  </span>
+                </div>
+                <div style={{
+                  padding: '18px',
+                  backgroundColor: 'rgba(196, 120, 74, 0.05)',
+                  border: '1px solid rgba(196, 120, 74, 0.15)',
+                  borderRadius: '14px',
+                  marginBottom: '16px',
+                }}>
+                  <p style={{ fontSize: '14px', color: '#2D2D2D', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: 0 }}>
+                    yo i saw your post about building in public, that really hit. been doing the same thing with my project and honestly the accountability side is what keeps me going. how long have you been at it?
+                  </p>
+                </div>
+                <p style={{ fontSize: '12px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
+                  sounds like a human wrote it. because, in a way, one did.
+                </p>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          <ScrollReveal style={{ textAlign: 'center', marginTop: '40px' }}>
+            <p style={{ fontSize: '15px', color: '#6B5E52', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, maxWidth: '520px', margin: '0 auto' }}>
+              think of it this way: your public voice is your posts. genUine is your private voice. your DMs.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ── STATS ── */}
+      <StatsSection />
 
       {/* ── FINAL CTA ── */}
       <section
