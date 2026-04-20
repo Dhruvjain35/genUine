@@ -1,683 +1,75 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import SiteHeader from './components/SiteHeader';
+import React from 'react';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Comparison from './components/Comparison';
+import Pricing from './components/Pricing';
 import SiteFooter from './components/SiteFooter';
-import ScrollReveal from './components/ScrollReveal';
-
-// ── Animated Counter ─────────────────────────────────────
-
-function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1400;
-          const start = performance.now();
-          const animate = (now: number) => {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const ease = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.floor(ease * target));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [target]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-}
-
-// ── Stats Section ────────────────────────────────────────
-
-function StatsSection() {
-  const [waitlistCount, setWaitlistCount] = useState<number>(0);
-
-  useEffect(() => {
-    fetch('/api/waitlist')
-      .then((r) => r.json())
-      .then((d) => { if (d.count) setWaitlistCount(d.count); })
-      .catch(() => {});
-  }, []);
-
-  const stats = [
-    { value: 40, suffix: '+', label: 'customer discovery conversations' },
-    { value: waitlistCount || 50, suffix: '+', label: 'people already waiting' },
-    { value: 6, suffix: '', label: 'team members and growing' },
-  ];
-
-  return (
-    <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FAF9F7' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', textAlign: 'center' }}>
-          {stats.map((s, i) => (
-            <ScrollReveal key={s.label} delay={i * 120}>
-              <div>
-                <div style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 'clamp(44px, 6vw, 64px)',
-                  letterSpacing: '-0.04em',
-                  color: '#C4784A',
-                  lineHeight: 1,
-                  marginBottom: '10px',
-                }}>
-                  <AnimatedCounter target={s.value} suffix={s.suffix} />
-                </div>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#6B5E52',
-                  fontFamily: "'DM Sans', sans-serif",
-                  lineHeight: 1.5,
-                }}>
-                  {s.label}
-                </p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const QUOTES = [
-  { quote: 'kinda shocked that it turned out that well', name: 'early user' },
-  { quote: 'the replies felt quite natural', name: 'early user' },
-  { quote: 'it lowk copied my tone', name: 'early user' },
-];
-
-const STEPS = [
-  {
-    num: '01',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    ),
-    title: 'teach genUine your voice',
-    desc: 'paste 3 messages you\'ve sent before. linkedin messages, texts, anything where you sounded like yourself.',
-  },
-  {
-    num: '02',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 1 0-16 0" />
-      </svg>
-    ),
-    title: 'paste a linkedin profile',
-    desc: 'grab their name, headline, about section — whatever\'s available. even a messy mobile paste works.',
-  },
-  {
-    num: '03',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-    title: 'get your message',
-    desc: 'two options, both in your voice. copy the one that feels right. that\'s it.',
-  },
-];
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   return (
-    <div style={{ backgroundColor: '#FAF9F7', color: '#2D2D2D', minHeight: '100vh' }}>
-      <SiteHeader activePage="home" />
-
-      {/* ── HERO ── */}
-      <section
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          padding: '100px 24px 60px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Warm background glow */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(242, 169, 34, 0.09) 0%, transparent 70%), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(196, 120, 74, 0.07) 0%, transparent 60%)',
-        }} />
-
-        <div style={{ position: 'relative', maxWidth: '680px', margin: '0 auto' }}>
-          {/* Wordmark */}
-          <div
-            className="fade-up stagger-2"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 800,
-              fontSize: 'clamp(52px, 10vw, 88px)',
-              letterSpacing: '-0.04em',
-              lineHeight: 1,
-              color: '#2D2D2D',
-              marginBottom: '24px',
-            }}
-          >
-            gen<span style={{ color: '#C4784A' }}>U</span>ine
-          </div>
-
-          {/* Headline */}
-          <h1
-            className="fade-up stagger-3"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(28px, 5vw, 42px)',
-              letterSpacing: '-0.02em',
-              color: '#2D2D2D',
-              marginBottom: '20px',
-              lineHeight: 1.2,
-            }}
-          >
-            your message. not AI's.
-          </h1>
-
-          {/* Subheadline */}
-          <p
-            className="fade-up stagger-4"
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 'clamp(16px, 2.5vw, 19px)',
-              color: '#6B5E52',
-              lineHeight: 1.7,
-              marginBottom: '40px',
-              maxWidth: '520px',
-              margin: '0 auto 40px',
-            }}
-          >
-            genUine learns how you write, then helps you start LinkedIn conversations that actually sound like you.
-          </p>
-
-          {/* CTAs */}
-          <div
-            className="fade-up"
-            style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', animationDelay: '280ms' }}
-          >
-            <Link href="/waitlist">
-              <button
-                className="btn-primary"
-                style={{ padding: '14px 32px', borderRadius: '14px', fontSize: '16px' }}
-              >
-                join the waitlist →
-              </button>
-            </Link>
-            <a href="#how-it-works">
-              <button
-                className="btn-ghost"
-                style={{ padding: '14px 28px', borderRadius: '14px', fontSize: '16px' }}
-              >
-                see how it works
-              </button>
-            </a>
-          </div>
-
-          {/* Floating quote preview */}
-          <div
-            className="fade-up float-anim"
-            style={{
-              marginTop: '64px',
-              display: 'inline-block',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid rgba(196, 120, 74, 0.15)',
-              borderRadius: '18px',
-              padding: '18px 24px',
-              boxShadow: '0 8px 32px rgba(196, 120, 74, 0.1)',
-              maxWidth: '380px',
-              animationDelay: '400ms',
-              animationDuration: '5s',
-            }}
-          >
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', textAlign: 'left' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: '16px' }}>👋</span>
+    <div className="min-h-screen bg-[#FAF9F7] selection:bg-[#C4784A]/30">
+      <Navbar />
+      
+      <main>
+        <Hero />
+        
+        {/* Social Proof / Stats Section */}
+        <section className="py-20 border-y border-black/5 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-12 text-center">
+              <div>
+                <div className="text-4xl md:text-5xl font-black tracking-tighter text-[#C4784A] mb-2">40+</div>
+                <p className="text-sm font-bold text-black/40 uppercase tracking-widest">Customer Discovery</p>
               </div>
               <div>
-                <p style={{ fontSize: '13px', color: '#6B5E52', lineHeight: 1.5, marginBottom: '4px' }}>
-                  "it lowk copied my tone — I was genuinely surprised"
-                </p>
-                <p style={{ fontSize: '11px', color: '#A08C7C', fontWeight: 600 }}>early user</p>
+                <div className="text-4xl md:text-5xl font-black tracking-tighter text-[#C4784A] mb-2">50+</div>
+                <p className="text-sm font-bold text-black/40 uppercase tracking-widest">People Waiting</p>
+              </div>
+              <div className="col-span-2 md:col-span-1">
+                <div className="text-4xl md:text-5xl font-black tracking-tighter text-[#C4784A] mb-2">6</div>
+                <p className="text-sm font-bold text-black/40 uppercase tracking-widest">Team Members</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section
-        id="how-it-works"
-        style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FFFFFF' }}
-      >
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <ScrollReveal>
-            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                how it works
-              </p>
-              <h2
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontSize: 'clamp(28px, 4vw, 40px)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  color: '#2D2D2D',
-                  marginBottom: '14px',
-                }}
-              >
-                three steps to a real message
+        <Features />
+        
+        <Comparison />
+        
+        <Pricing />
+
+        {/* Final CTA */}
+        <section className="py-32 bg-black text-white overflow-hidden relative">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-[#C4784A] rounded-full blur-[200px]" />
+          </div>
+          
+          <div className="container mx-auto px-6 relative z-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-5xl md:text-7xl font-bold tracking-tighter font-jakarta mb-8">
+                Stop staring at the<br />
+                <span className="text-[#C4784A]">blank message box.</span>
               </h2>
-              <p style={{ fontSize: '16px', color: '#6B5E52', maxWidth: '400px', margin: '0 auto', lineHeight: 1.6 }}>
-                under 2 minutes from start to sent.
+              <p className="text-xl text-white/50 font-medium mb-12 max-w-2xl mx-auto">
+                Your next real conversation is one message away. Join the waitlist and start sounding like yourself again.
               </p>
-            </div>
-          </ScrollReveal>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-            {STEPS.map((step, i) => (
-              <ScrollReveal key={step.num} delay={i * 120}>
-                <div
-                  className="warm-card"
-                  style={{ borderRadius: '20px', padding: '32px 28px', height: '100%' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                    <div
-                      style={{
-                        width: 52, height: 52, borderRadius: '14px',
-                        backgroundColor: 'rgba(196, 120, 74, 0.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#C4784A', flexShrink: 0,
-                      }}
-                    >
-                      {step.icon}
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        fontWeight: 800, fontSize: '13px',
-                        color: 'rgba(196, 120, 74, 0.4)', letterSpacing: '0.04em',
-                      }}
-                    >
-                      {step.num}
-                    </span>
-                  </div>
-                  <h3
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '18px', fontWeight: 700,
-                      color: '#2D2D2D', marginBottom: '10px', letterSpacing: '-0.01em',
-                    }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p style={{ fontSize: '14px', color: '#6B5E52', lineHeight: 1.65 }}>
-                    {step.desc}
-                  </p>
-                </div>
-              </ScrollReveal>
-            ))}
+              <button className="px-10 py-5 bg-white text-black font-black text-lg rounded-2xl hover:scale-105 transition-transform">
+                Join the waitlist — it's free →
+              </button>
+            </motion.div>
           </div>
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FAF9F7' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              what people said
-            </p>
-            <h2
-              style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 4vw, 36px)',
-                fontWeight: 700, letterSpacing: '-0.02em',
-                color: '#2D2D2D', marginBottom: '8px',
-              }}
-            >
-              real reactions from real people
-            </h2>
-          </ScrollReveal>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            {QUOTES.map((q, i) => (
-              <ScrollReveal key={q.name} delay={i * 100}>
-                <div
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid rgba(196, 120, 74, 0.12)',
-                    borderRadius: '18px',
-                    padding: '24px',
-                    boxShadow: '0 4px 20px rgba(196, 120, 74, 0.06)',
-                  }}
-                >
-                  <p style={{ fontSize: '18px', color: '#C4784A', marginBottom: '12px', lineHeight: 1 }}>❝</p>
-                  <p
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '16px', fontWeight: 600,
-                      color: '#2D2D2D', lineHeight: 1.5, marginBottom: '16px',
-                    }}
-                  >
-                    {q.quote}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#C4784A' }}>{q.name[0]}</span>
-                    </div>
-                    <span style={{ fontSize: '13px', color: '#A08C7C', fontWeight: 500 }}>{q.name}</span>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── DIFFERENTIATOR ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FFFFFF' }}>
-        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '20px' }}>
-              not another AI writing tool
-            </p>
-            <h2
-              style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(28px, 5vw, 44px)',
-                fontWeight: 800, letterSpacing: '-0.03em',
-                color: '#2D2D2D', lineHeight: 1.2, marginBottom: '24px',
-              }}
-            >
-              other tools write messages that sound{' '}
-              <span style={{ color: '#A08C7C', fontStyle: 'italic' }}>human.</span>
-              <br />
-              genUine writes messages that sound like{' '}
-              <span style={{ color: '#C4784A' }}>YOU.</span>
-            </h2>
-            <p style={{ fontSize: '17px', color: '#6B5E52', lineHeight: 1.7, marginBottom: '32px' }}>
-              your vocabulary. your tone. your energy. the way you start sentences, the questions you ask, whether you use exclamation marks or not.
-            </p>
-            <div
-              style={{
-                display: 'inline-block',
-                backgroundColor: 'rgba(196, 120, 74, 0.08)',
-                border: '1px solid rgba(196, 120, 74, 0.15)',
-                borderRadius: '14px',
-                padding: '16px 24px',
-              }}
-            >
-              <p style={{ fontSize: '15px', color: '#6B5E52', lineHeight: 1.6 }}>
-                think of it this way — other tools give you a generic human voice.<br />
-                <strong style={{ color: '#2D2D2D' }}>genUine gives you YOUR voice.</strong>
-              </p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ── PRICING TEASER ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FAF9F7' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
-          <ScrollReveal>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              pricing
-            </p>
-            <h2
-              style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 4vw, 36px)',
-                fontWeight: 700, letterSpacing: '-0.02em',
-                color: '#2D2D2D', marginBottom: '16px',
-              }}
-            >
-              start free. go pro when you\'re ready.
-            </h2>
-            <p style={{ fontSize: '16px', color: '#6B5E52', marginBottom: '40px', lineHeight: 1.6 }}>
-              3 messages a day, free forever. unlimited with Pro.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-              {/* Free */}
-              <div
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(196, 120, 74, 0.15)',
-                  borderRadius: '20px',
-                  padding: '28px 24px',
-                  textAlign: 'left',
-                }}
-              >
-                <p style={{ fontSize: '13px', fontWeight: 600, color: '#A08C7C', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>free</p>
-                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '32px', fontWeight: 800, color: '#2D2D2D', marginBottom: '4px' }}>$0</p>
-                <p style={{ fontSize: '13px', color: '#A08C7C', marginBottom: '20px' }}>forever</p>
-                {['3 messages per day', 'voice saving', 'profile analysis'].map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ color: '#C4784A', fontSize: '14px' }}>✓</span>
-                    <span style={{ fontSize: '14px', color: '#6B5E52' }}>{f}</span>
-                  </div>
-                ))}
-                <Link href="/waitlist">
-                  <button className="btn-ghost w-full py-3 rounded-xl text-sm mt-4" style={{ width: '100%', marginTop: '20px' }}>
-                    join waitlist
-                  </button>
-                </Link>
-              </div>
-
-              {/* Pro */}
-              <div
-                style={{
-                  backgroundColor: '#C4784A',
-                  borderRadius: '20px',
-                  padding: '28px 24px',
-                  textAlign: 'left',
-                  position: 'relative',
-                  boxShadow: '0 8px 32px rgba(196, 120, 74, 0.3)',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute', top: '-10px', right: '20px',
-                    backgroundColor: '#F2A922',
-                    borderRadius: '100px', padding: '3px 12px',
-                    fontSize: '11px', fontWeight: 700, color: '#2D2D2D',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  most popular
-                </div>
-                <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>pro</p>
-                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '32px', fontWeight: 800, color: '#FFFFFF', marginBottom: '4px' }}>$12<span style={{ fontSize: '16px', fontWeight: 400 }}>/mo</span></p>
-                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px' }}>or $99/year — save 31%</p>
-                {['unlimited messages', 'advanced voice matching', 'priority support', 'personality profiles'].map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ color: '#F2A922', fontSize: '14px' }}>✓</span>
-                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)' }}>{f}</span>
-                  </div>
-                ))}
-                <Link href="/pricing">
-                  <button
-                    style={{
-                      width: '100%', marginTop: '20px', padding: '12px',
-                      backgroundColor: '#FFFFFF', color: '#C4784A',
-                      border: 'none', borderRadius: '12px',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontWeight: 700, fontSize: '14px', cursor: 'pointer',
-                      transition: 'transform 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  >
-                    go pro →
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ── DIFFERENTIATOR ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#F5F0EB' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              what makes it different
-            </p>
-            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 700, letterSpacing: '-0.02em', color: '#2D2D2D', marginBottom: '8px' }}>
-              not another AI writing tool
-            </h2>
-            <p style={{ fontSize: '16px', color: '#6B5E52', maxWidth: '520px', margin: '0 auto', lineHeight: 1.7 }}>
-              other tools write messages that sound human. genUine writes messages that sound like <strong style={{ color: '#2D2D2D' }}>YOU</strong>.
-            </p>
-          </ScrollReveal>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', alignItems: 'stretch' }}>
-            {/* LEFT — generic AI */}
-            <ScrollReveal>
-              <div style={{
-                backgroundColor: '#FFFFFF',
-                border: '1.5px solid rgba(0,0,0,0.08)',
-                borderRadius: '20px',
-                padding: '28px',
-                opacity: 0.7,
-                height: '100%',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                  <span style={{ fontSize: '18px' }}>✕</span>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#888', textDecoration: 'line-through' }}>
-                    generic AI
-                  </span>
-                </div>
-                {[
-                  'I hope this message finds you well.',
-                  "I came across your profile and was truly impressed by your experience.",
-                  "I'd love to explore potential synergies between our work.",
-                  "I'd love to pick your brain about your journey.",
-                ].map((msg) => (
-                  <div key={msg} style={{
-                    padding: '12px 14px',
-                    marginBottom: '10px',
-                    backgroundColor: 'rgba(0,0,0,0.04)',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    color: '#888',
-                    fontFamily: "'DM Sans', sans-serif",
-                    lineHeight: 1.5,
-                    fontStyle: 'italic',
-                    textDecoration: 'line-through',
-                  }}>
-                    {msg}
-                  </div>
-                ))}
-              </div>
-            </ScrollReveal>
-
-            {/* RIGHT — genUine */}
-            <ScrollReveal delay={100}>
-              <div style={{
-                backgroundColor: '#FFFFFF',
-                border: '1.5px solid rgba(196, 120, 74, 0.25)',
-                borderRadius: '20px',
-                padding: '28px',
-                boxShadow: '0 8px 32px rgba(196, 120, 74, 0.12)',
-                height: '100%',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                  <span style={{ fontSize: '18px' }}>✓</span>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#C4784A' }}>
-                    gen<span style={{ textDecoration: 'none' }}>U</span>ine
-                  </span>
-                </div>
-                <div style={{
-                  padding: '18px',
-                  backgroundColor: 'rgba(196, 120, 74, 0.05)',
-                  border: '1px solid rgba(196, 120, 74, 0.15)',
-                  borderRadius: '14px',
-                  marginBottom: '16px',
-                }}>
-                  <p style={{ fontSize: '14px', color: '#2D2D2D', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, margin: 0 }}>
-                    yo i saw your post about building in public, that really hit. been doing the same thing with my project and honestly the accountability side is what keeps me going. how long have you been at it?
-                  </p>
-                </div>
-                <p style={{ fontSize: '12px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-                  sounds like a human wrote it. because, in a way, one did.
-                </p>
-              </div>
-            </ScrollReveal>
-          </div>
-
-          <ScrollReveal style={{ textAlign: 'center', marginTop: '40px' }}>
-            <p style={{ fontSize: '15px', color: '#6B5E52', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.7, maxWidth: '520px', margin: '0 auto' }}>
-              think of it this way: your public voice is your posts. genUine is your private voice. your DMs.
-            </p>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ── STATS ── */}
-      <StatsSection />
-
-      {/* ── FINAL CTA ── */}
-      <section
-        style={{
-          padding: 'clamp(80px, 12vw, 120px) 24px',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #FAF9F7 0%, #F3EDE7 100%)',
-        }}
-      >
-        <ScrollReveal>
-          <h2
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 'clamp(32px, 5vw, 52px)',
-              fontWeight: 800, letterSpacing: '-0.03em',
-              color: '#2D2D2D', lineHeight: 1.2, marginBottom: '20px',
-            }}
-          >
-            stop staring at the
-            <br />
-            <span style={{ color: '#C4784A' }}>blank message box.</span>
-          </h2>
-          <p style={{ fontSize: '17px', color: '#6B5E52', marginBottom: '40px', lineHeight: 1.6 }}>
-            your next real conversation is one message away.
-          </p>
-          <Link href="/waitlist">
-            <button
-              className="btn-primary"
-              style={{ padding: '16px 40px', borderRadius: '16px', fontSize: '17px' }}
-            >
-              join the waitlist — it&apos;s free →
-            </button>
-          </Link>
-          <p
-            style={{
-              marginTop: '32px', fontSize: '16px', color: '#A08C7C',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontStyle: 'italic',
-            }}
-          >
-            see u later — shaan
-          </p>
-        </ScrollReveal>
-      </section>
+        </section>
+      </main>
 
       <SiteFooter />
     </div>
