@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
+import ScrollProgress from '../components/ScrollProgress';
+import ScrollReveal from '../components/ScrollReveal';
+import AnimatedHeading from '../components/AnimatedHeading';
 
 interface VoiceProfile {
   tone?: string;
@@ -27,8 +31,16 @@ interface HistoryEntry {
 function CopyBtn({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
-    try { await navigator.clipboard.writeText(text); }
-    catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -36,14 +48,20 @@ function CopyBtn({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       style={{
-        display: 'flex', alignItems: 'center', gap: '5px',
-        padding: '6px 12px', borderRadius: '8px',
-        border: copied ? '1px solid #C4784A' : '1px solid #E8DDD5',
-        backgroundColor: copied ? 'rgba(196, 120, 74, 0.08)' : 'transparent',
-        color: copied ? '#C4784A' : '#A08C7C',
-        fontSize: '12px', fontWeight: 600,
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        cursor: 'pointer', transition: 'all 0.2s ease',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 12px',
+        borderRadius: 8,
+        border: `1px solid ${copied ? 'var(--terra)' : 'var(--ink-whisper)'}`,
+        backgroundColor: copied ? 'var(--terra-tint)' : 'transparent',
+        color: copied ? 'var(--terra)' : 'var(--ink-mid)',
+        fontSize: 11,
+        fontWeight: 500,
+        fontFamily: 'var(--font-jakarta)',
+        letterSpacing: '0.02em',
+        cursor: 'pointer',
+        transition: 'background-color 220ms ease, color 220ms ease, border-color 220ms ease',
       }}
     >
       {copied ? '✓ copied' : 'copy'}
@@ -58,7 +76,7 @@ function formatDate(iso: string) {
 
 function getProfilePreview(rawProfile: string) {
   const firstLine = rawProfile.split('\n')[0]?.trim();
-  return firstLine?.length > 60 ? firstLine.slice(0, 57) + '...' : firstLine || 'unknown person';
+  return firstLine?.length > 60 ? firstLine.slice(0, 57) + '…' : firstLine || 'unknown person';
 }
 
 export default function DashboardPage() {
@@ -85,284 +103,592 @@ export default function DashboardPage() {
 
       if (localStorage.getItem('genuine_is_pro') === 'true') setIsPro(true);
       if (localStorage.getItem('genuine_admin') === 'true') setIsAdmin(true);
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }, []);
 
   const handleClearVoice = () => {
-    if (!confirm('Reset your voice profile? You\'ll need to set it up again.')) return;
+    if (!confirm("reset your voice profile? you'll need to set it up again.")) return;
     localStorage.removeItem('genuine_voice_profile');
     setVoiceProfile(null);
   };
 
-  const filteredHistory = history.filter((h) =>
-    search.trim() === '' ||
-    h.rawProfile.toLowerCase().includes(search.toLowerCase())
+  const filteredHistory = history.filter(
+    (h) =>
+      search.trim() === '' || h.rawProfile.toLowerCase().includes(search.toLowerCase())
   );
 
   const FREE_LIMIT = 3;
-  const messagesRemaining = (isPro || isAdmin) ? null : Math.max(0, FREE_LIMIT - messagesUsed);
+  const messagesRemaining = isPro || isAdmin ? null : Math.max(0, FREE_LIMIT - messagesUsed);
 
-  const sectionHead: React.CSSProperties = {
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    fontSize: '13px', fontWeight: 700,
-    color: '#C4784A', letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
-    marginBottom: '16px',
-  };
-
-  const card: React.CSSProperties = {
-    backgroundColor: '#FFFFFF',
-    border: '1px solid rgba(196, 120, 74, 0.12)',
-    borderRadius: '18px',
-    padding: '24px',
-    boxShadow: '0 2px 16px rgba(196, 120, 74, 0.06)',
-  };
+  const stats = [
+    {
+      label: 'messages today',
+      value: isAdmin || isPro ? '∞' : `${messagesUsed} / ${FREE_LIMIT}`,
+      sub: isAdmin ? 'admin mode' : isPro ? 'unlimited · pro' : `${messagesRemaining} left`,
+    },
+    {
+      label: 'all time',
+      value: String(history.length),
+      sub: 'messages generated',
+    },
+    {
+      label: 'voice profile',
+      value: voiceProfile ? 'set' : '—',
+      sub: voiceProfile ? 'saved' : 'not set',
+    },
+    {
+      label: 'plan',
+      value: isAdmin ? 'admin' : isPro ? 'pro' : 'free',
+      sub: isAdmin ? 'unlimited access' : isPro ? 'unlimited messages' : '3 messages/day',
+    },
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7' }}>
-      <SiteHeader activePage="home" />
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)' }}>
+      <ScrollProgress />
+      <SiteHeader activePage="dashboard" />
 
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '100px 24px 80px' }}>
-
-        {/* Page title */}
-        <div style={{ marginBottom: '40px' }}>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 'clamp(28px, 4vw, 38px)', color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '8px' }}>
-            your gen<span style={{ color: '#C4784A' }}>U</span>ine dashboard
-          </h1>
-          <p style={{ fontSize: '15px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
-            everything in one place.
-          </p>
+      {/* Header */}
+      <section style={{ padding: '140px 24px 40px', position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(900px 400px at 10% 0%, rgba(196,120,74,0.08), transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
+          <ScrollReveal>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 14 }}>
+              — dashboard
+            </p>
+          </ScrollReveal>
+          <AnimatedHeading
+            as="h1"
+            text="your genUine, at a glance."
+            style={{
+              fontFamily: 'var(--font-jakarta)',
+              fontSize: 'clamp(36px, 6vw, 72px)',
+              fontWeight: 700,
+              letterSpacing: '-0.035em',
+              lineHeight: 1.0,
+              color: 'var(--ink)',
+              marginBottom: 16,
+            }}
+          />
+          <ScrollReveal delay={140}>
+            <p
+              className="serif-italic"
+              style={{
+                fontSize: 'clamp(18px, 2vw, 22px)',
+                color: 'var(--ink-mid)',
+                lineHeight: 1.4,
+              }}
+            >
+              everything in one place.
+            </p>
+          </ScrollReveal>
         </div>
+      </section>
 
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-          {[
-            {
-              label: 'messages today',
-              value: isAdmin ? '∞' : isPro ? '∞' : `${messagesUsed} / ${FREE_LIMIT}`,
-              sub: isAdmin ? 'admin mode' : isPro ? 'unlimited · pro' : `${messagesRemaining} left`,
-            },
-            {
-              label: 'all time',
-              value: history.length,
-              sub: 'messages generated',
-            },
-            {
-              label: 'voice profile',
-              value: voiceProfile ? '✓' : '—',
-              sub: voiceProfile ? 'saved' : 'not set',
-            },
-            {
-              label: 'plan',
-              value: isAdmin ? 'admin' : isPro ? 'pro' : 'free',
-              sub: isAdmin ? 'unlimited access' : isPro ? 'unlimited messages' : '3 messages / day',
-            },
-          ].map((s) => (
-            <div key={s.label} style={{ ...card, textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#A08C7C', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '8px' }}>
-                {s.label}
-              </p>
-              <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '24px', color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '4px' }}>
-                {s.value}
-              </p>
-              <p style={{ fontSize: '12px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
-                {s.sub}
+      {/* Stats grid */}
+      <section style={{ padding: '40px 24px 56px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              borderTop: '1px solid var(--ink-whisper)',
+              borderLeft: '1px solid var(--ink-whisper)',
+            }}
+          >
+            {stats.map((s, i) => (
+              <ScrollReveal key={s.label} delay={i * 60}>
+                <div
+                  style={{
+                    padding: '32px 28px',
+                    borderRight: '1px solid var(--ink-whisper)',
+                    borderBottom: '1px solid var(--ink-whisper)',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 24,
+                    minHeight: 180,
+                  }}
+                >
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--ink-light)',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {s.label}
+                  </span>
+                  <div>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-jakarta)',
+                        fontSize: 44,
+                        fontWeight: 700,
+                        color: 'var(--ink)',
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {s.value}
+                    </p>
+                    <p
+                      className="serif-italic"
+                      style={{
+                        fontSize: 14,
+                        color: 'var(--ink-mid)',
+                      }}
+                    >
+                      {s.sub}
+                    </p>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Voice profile */}
+      <section style={{ padding: '40px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                marginBottom: 20,
+              }}
+            >
+              <p className="eyebrow" style={{ color: 'var(--terra)' }}>
+                — your voice profile
               </p>
             </div>
-          ))}
-        </div>
-
-        {/* Voice profile */}
-        <div style={{ marginBottom: '40px' }}>
-          <p style={sectionHead}>your voice profile</p>
-          <div style={card}>
-            {voiceProfile ? (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-                  {[
-                    { label: 'tone', value: voiceProfile.tone },
-                    { label: 'energy', value: voiceProfile.energy },
-                    { label: 'style', value: voiceProfile.style || voiceProfile.overallStyle },
-                    { label: 'pattern', value: voiceProfile.pattern },
-                  ].filter(r => r.value).map((row) => (
-                    <div key={row.label} style={{ padding: '12px', backgroundColor: 'rgba(196, 120, 74, 0.04)', borderRadius: '10px' }}>
-                      <p style={{ fontSize: '10px', fontWeight: 700, color: '#C4784A', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '4px' }}>
-                        {row.label}
-                      </p>
-                      <p style={{ fontSize: '13px', color: '#2D2D2D', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.4 }}>
-                        {String(row.value)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <Link href="/app">
+            <div className="warm-card" style={{ padding: 32 }}>
+              {voiceProfile ? (
+                <>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: 16,
+                      marginBottom: 24,
+                    }}
+                  >
+                    {[
+                      { label: 'tone', value: voiceProfile.tone },
+                      { label: 'energy', value: voiceProfile.energy },
+                      { label: 'style', value: voiceProfile.style || voiceProfile.overallStyle },
+                      { label: 'pattern', value: voiceProfile.pattern },
+                    ]
+                      .filter((r) => r.value)
+                      .map((row) => (
+                        <div
+                          key={row.label}
+                          style={{
+                            padding: 16,
+                            backgroundColor: 'var(--paper)',
+                            borderRadius: 12,
+                            border: '1px solid var(--ink-whisper)',
+                          }}
+                        >
+                          <p
+                            className="mono"
+                            style={{
+                              fontSize: 10,
+                              color: 'var(--terra)',
+                              letterSpacing: '0.1em',
+                              textTransform: 'uppercase',
+                              marginBottom: 6,
+                            }}
+                          >
+                            {row.label}
+                          </p>
+                          <p
+                            style={{
+                              fontSize: 14,
+                              color: 'var(--ink)',
+                              fontFamily: 'var(--font-dm)',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {String(row.value)}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <Link href="/app" style={{ textDecoration: 'none' }}>
+                      <button
+                        className="btn-primary"
+                        style={{ padding: '10px 22px', borderRadius: 999, fontSize: 13 }}
+                      >
+                        use it →
+                      </button>
+                    </Link>
+                    <button
+                      onClick={handleClearVoice}
+                      className="btn-ghost"
+                      style={{ padding: '10px 20px', borderRadius: 999, fontSize: 13 }}
+                    >
+                      reset voice
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <p
+                    className="serif-italic"
+                    style={{ fontSize: 18, color: 'var(--ink-mid)', marginBottom: 20 }}
+                  >
+                    no voice profile yet. set one up to get started.
+                  </p>
+                  <Link href="/app" style={{ textDecoration: 'none' }}>
                     <button
                       className="btn-primary"
-                      style={{ padding: '9px 20px', borderRadius: '10px', fontSize: '13px' }}
+                      style={{ padding: '12px 28px', borderRadius: 999, fontSize: 14 }}
                     >
-                      use it →
+                      set up my voice →
                     </button>
                   </Link>
-                  <button
-                    onClick={handleClearVoice}
-                    className="btn-ghost"
-                    style={{ padding: '9px 18px', borderRadius: '10px', fontSize: '13px' }}
-                  >
-                    reset voice
-                  </button>
                 </div>
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '16px', fontFamily: "'DM Sans', sans-serif" }}>
-                  no voice profile yet. set one up to get started.
+              )}
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Message history */}
+      <section style={{ padding: '40px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                marginBottom: 20,
+              }}
+            >
+              <p className="eyebrow" style={{ color: 'var(--terra)' }}>
+                — message history
+              </p>
+              <span className="mono" style={{ fontSize: 11, color: 'var(--ink-light)' }}>
+                {history.length} total
+              </span>
+            </div>
+
+            {history.length > 0 && (
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="search by name or profile…"
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  borderRadius: 12,
+                  border: '1px solid var(--ink-whisper)',
+                  backgroundColor: 'var(--paper-warm)',
+                  fontFamily: 'var(--font-dm)',
+                  fontSize: 14,
+                  color: 'var(--ink)',
+                  outline: 'none',
+                  marginBottom: 16,
+                  boxSizing: 'border-box',
+                  transition: 'border-color 180ms ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--ink)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--ink-whisper)';
+                }}
+              />
+            )}
+
+            {filteredHistory.length === 0 ? (
+              <div
+                className="warm-card"
+                style={{ textAlign: 'center', padding: 48 }}
+              >
+                <p
+                  className="serif-italic"
+                  style={{ fontSize: 18, color: 'var(--ink-mid)', marginBottom: 20 }}
+                >
+                  {history.length === 0 ? 'no messages generated yet.' : 'no results found.'}
                 </p>
-                <Link href="/app">
-                  <button className="btn-primary" style={{ padding: '10px 24px', borderRadius: '11px', fontSize: '14px' }}>
-                    set up my voice →
-                  </button>
-                </Link>
+                {history.length === 0 && (
+                  <Link href="/app" style={{ textDecoration: 'none' }}>
+                    <button
+                      className="btn-primary"
+                      style={{ padding: '12px 28px', borderRadius: 999, fontSize: 14 }}
+                    >
+                      write your first message →
+                    </button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {filteredHistory.map((entry) => {
+                  const open = expandedId === entry.id;
+                  return (
+                    <div
+                      key={entry.id}
+                      className="warm-card"
+                      style={{ padding: 20, overflow: 'hidden' }}
+                    >
+                      <button
+                        onClick={() => setExpandedId(open ? null : entry.id)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          padding: 0,
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <p
+                            style={{
+                              fontFamily: 'var(--font-jakarta)',
+                              fontWeight: 500,
+                              fontSize: 16,
+                              color: 'var(--ink)',
+                              marginBottom: 6,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {getProfilePreview(entry.rawProfile)}
+                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <span
+                              className="mono"
+                              style={{ fontSize: 11, color: 'var(--ink-light)', letterSpacing: '0.04em' }}
+                            >
+                              {formatDate(entry.date)}
+                            </span>
+                            {entry.recipientType && (
+                              <span
+                                className="mono"
+                                style={{
+                                  fontSize: 10,
+                                  color: 'var(--terra)',
+                                  border: '1px solid rgba(196,120,74,0.3)',
+                                  backgroundColor: 'var(--terra-tint)',
+                                  padding: '2px 8px',
+                                  borderRadius: 999,
+                                  letterSpacing: '0.08em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {entry.recipientType}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span
+                          aria-hidden
+                          style={{
+                            flexShrink: 0,
+                            width: 26,
+                            height: 26,
+                            borderRadius: '50%',
+                            border: '1px solid var(--ink-whisper)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 16,
+                            lineHeight: 1,
+                            color: 'var(--ink-mid)',
+                            transition: 'transform 280ms var(--ease-out), background-color 220ms ease, color 220ms ease',
+                            transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+                            backgroundColor: open ? 'var(--ink)' : 'transparent',
+                          }}
+                        >
+                          <span style={{ color: open ? 'var(--paper)' : 'inherit' }}>+</span>
+                        </span>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {open && (
+                          <motion.div
+                            key="content"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            style={{ overflow: 'hidden' }}
+                          >
+                            <div
+                              style={{
+                                marginTop: 20,
+                                paddingTop: 20,
+                                borderTop: '1px solid var(--ink-whisper)',
+                              }}
+                            >
+                              {entry.messageA && (
+                                <div style={{ marginBottom: 16 }}>
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      marginBottom: 10,
+                                    }}
+                                  >
+                                    <span
+                                      className="eyebrow"
+                                      style={{ color: 'var(--terra)', fontSize: 10 }}
+                                    >
+                                      — common ground
+                                    </span>
+                                    <CopyBtn text={entry.messageA} />
+                                  </div>
+                                  <p
+                                    style={{
+                                      fontSize: 14,
+                                      color: 'var(--ink)',
+                                      lineHeight: 1.7,
+                                      fontFamily: 'var(--font-dm)',
+                                      backgroundColor: 'var(--paper)',
+                                      padding: 16,
+                                      borderRadius: 12,
+                                      border: '1px solid var(--ink-whisper)',
+                                    }}
+                                  >
+                                    {entry.messageA}
+                                  </p>
+                                </div>
+                              )}
+                              {entry.messageB && (
+                                <div>
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      marginBottom: 10,
+                                    }}
+                                  >
+                                    <span
+                                      className="eyebrow"
+                                      style={{ color: 'var(--ink-mid)', fontSize: 10 }}
+                                    >
+                                      — genuine curiosity
+                                    </span>
+                                    <CopyBtn text={entry.messageB} />
+                                  </div>
+                                  <p
+                                    style={{
+                                      fontSize: 14,
+                                      color: 'var(--ink)',
+                                      lineHeight: 1.7,
+                                      fontFamily: 'var(--font-dm)',
+                                      backgroundColor: 'var(--paper)',
+                                      padding: 16,
+                                      borderRadius: 12,
+                                      border: '1px solid var(--ink-whisper)',
+                                    }}
+                                  >
+                                    {entry.messageB}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </div>
+          </ScrollReveal>
         </div>
+      </section>
 
-        {/* Message history */}
-        <div style={{ marginBottom: '40px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <p style={sectionHead}>message history</p>
-            <span style={{ fontSize: '12px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
-              {history.length} total
-            </span>
-          </div>
-
-          {history.length > 0 && (
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="search by name or profile..."
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                border: '1.5px solid #E8DDD5',
-                backgroundColor: '#FFFFFF',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '13px',
-                color: '#2D2D2D',
-                outline: 'none',
-                marginBottom: '14px',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => { e.target.style.borderColor = '#C4784A'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; }}
-            />
-          )}
-
-          {filteredHistory.length === 0 ? (
-            <div style={{ ...card, textAlign: 'center', padding: '36px' }}>
-              <p style={{ fontSize: '14px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif", marginBottom: '16px' }}>
-                {history.length === 0 ? 'no messages generated yet.' : 'no results found.'}
-              </p>
-              {history.length === 0 && (
-                <Link href="/app">
-                  <button className="btn-primary" style={{ padding: '10px 24px', borderRadius: '11px', fontSize: '14px' }}>
-                    write your first message →
-                  </button>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {filteredHistory.map((entry) => (
-                <div key={entry.id} style={card}>
-                  <div
-                    style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', cursor: 'pointer', gap: '12px' }}
-                    onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
+      {/* Account */}
+      <section style={{ padding: '40px 24px 120px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 20 }}>
+              — account
+            </p>
+            <div className="warm-card" style={{ padding: 28 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-jakarta)',
+                      fontWeight: 600,
+                      fontSize: 18,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.015em',
+                      marginBottom: 6,
+                    }}
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: '14px', color: '#2D2D2D', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {getProfilePreview(entry.rawProfile)}
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '12px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
-                          {formatDate(entry.date)}
-                        </span>
-                        {entry.recipientType && (
-                          <span style={{ fontSize: '11px', color: '#C4784A', backgroundColor: 'rgba(196, 120, 74, 0.1)', padding: '2px 8px', borderRadius: '100px', fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600 }}>
-                            {entry.recipientType}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '12px', color: '#A08C7C', flexShrink: 0, marginTop: '2px' }}>
-                      {expandedId === entry.id ? '↑' : '↓'}
-                    </span>
-                  </div>
-
-                  {expandedId === entry.id && (
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(196, 120, 74, 0.08)' }}>
-                      {entry.messageA && (
-                        <div style={{ marginBottom: '14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#C4784A', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                              common ground
-                            </span>
-                            <CopyBtn text={entry.messageA} />
-                          </div>
-                          <p style={{ fontSize: '13px', color: '#2D2D2D', lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", backgroundColor: 'rgba(196, 120, 74, 0.04)', padding: '12px', borderRadius: '10px' }}>
-                            {entry.messageA}
-                          </p>
-                        </div>
-                      )}
-                      {entry.messageB && (
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#B8860B', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                              genuine curiosity
-                            </span>
-                            <CopyBtn text={entry.messageB} />
-                          </div>
-                          <p style={{ fontSize: '13px', color: '#2D2D2D', lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", backgroundColor: 'rgba(242, 169, 34, 0.05)', padding: '12px', borderRadius: '10px' }}>
-                            {entry.messageB}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    {isAdmin ? 'admin' : isPro ? 'pro plan' : 'free plan'}
+                  </p>
+                  <p
+                    className="serif-italic"
+                    style={{ fontSize: 15, color: 'var(--ink-mid)' }}
+                  >
+                    {isAdmin
+                      ? 'unlimited access across all features'
+                      : isPro
+                      ? 'unlimited messages, all features unlocked'
+                      : '3 messages per day, voice saving included'}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Account */}
-        <div>
-          <p style={sectionHead}>account</p>
-          <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: '15px', color: '#2D2D2D', marginBottom: '4px' }}>
-                  {isAdmin ? 'admin' : isPro ? 'pro plan' : 'free plan'}
-                </p>
-                <p style={{ fontSize: '13px', color: '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
-                  {isAdmin ? 'unlimited access across all features' : isPro ? 'unlimited messages, all features unlocked' : '3 messages per day, voice saving included'}
-                </p>
+                {!isPro && !isAdmin && (
+                  <Link href="/pricing" style={{ textDecoration: 'none' }}>
+                    <button
+                      className="btn-primary"
+                      style={{ padding: '12px 24px', borderRadius: 999, fontSize: 13 }}
+                    >
+                      go pro →
+                    </button>
+                  </Link>
+                )}
               </div>
-              {!isPro && !isAdmin && (
-                <Link href="/pricing">
-                  <button className="btn-primary" style={{ padding: '10px 22px', borderRadius: '11px', fontSize: '13px' }}>
-                    go pro →
-                  </button>
-                </Link>
-              )}
             </div>
-          </div>
+          </ScrollReveal>
         </div>
-
-      </div>
+      </section>
 
       <SiteFooter />
     </div>

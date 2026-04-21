@@ -23,24 +23,27 @@ export default function WaitlistCounter() {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '6px',
-        backgroundColor: 'rgba(196, 120, 74, 0.08)',
-        border: '1px solid rgba(196, 120, 74, 0.15)',
-        borderRadius: '100px',
-        padding: '5px 14px',
-        marginBottom: '20px',
+        gap: 10,
+        padding: '6px 14px',
+        borderRadius: 999,
+        border: '1px solid var(--ink-whisper)',
+        backgroundColor: 'var(--paper-warm)',
       }}
     >
-      <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#C4784A', display: 'inline-block', flexShrink: 0 }} />
       <span
+        className="pulse-dot"
+        style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block', flexShrink: 0 }}
+      />
+      <span
+        className="mono"
         style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: '13px',
-          color: '#6B5E52',
-          fontWeight: 500,
+          fontSize: 11,
+          color: 'var(--ink-mid)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
         }}
       >
-        join <strong style={{ color: '#C4784A' }}>{count}+</strong> people already waiting
+        join <strong style={{ color: 'var(--terra)', fontWeight: 600 }}>{count}+</strong> already waiting
       </span>
     </div>
   );

@@ -28,9 +28,8 @@ export default function WaitlistForm() {
         body: encode({ 'form-name': 'waitlist', email: email.trim() }),
       });
 
-      if (res.ok) {
-        setStatus('success');
-      } else {
+      if (res.ok) setStatus('success');
+      else {
         setErrorMsg('something went wrong. please try again.');
         setStatus('error');
       }
@@ -40,24 +39,23 @@ export default function WaitlistForm() {
     }
   };
 
-  if (status === 'success') {
-    return <WaitlistSuccess name="" />;
-  }
+  if (status === 'success') return <WaitlistSuccess name="" />;
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      name="waitlist"
-      style={{ width: '100%', maxWidth: '480px', margin: '0 auto' }}
-    >
-      {/* Required hidden field for Netlify */}
+    <form onSubmit={handleSubmit} name="waitlist" style={{ width: '100%' }}>
       <input type="hidden" name="form-name" value="waitlist" />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <label
+          className="eyebrow"
+          style={{ color: 'var(--ink-light)', marginBottom: -4 }}
+        >
+          — your email
+        </label>
         <input
           type="email"
           name="email"
-          placeholder="your email"
+          placeholder="you@domain.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -65,29 +63,29 @@ export default function WaitlistForm() {
           required
           style={{
             width: '100%',
-            padding: '14px 18px',
-            backgroundColor: '#FFFFFF',
-            border: focused
-              ? '1.5px solid #C4784A'
-              : '1.5px solid rgba(196, 120, 74, 0.2)',
-            borderRadius: '14px',
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: '16px',
-            color: '#2D2D2D',
+            padding: '16px 18px',
+            backgroundColor: 'var(--paper)',
+            border: `1px solid ${focused ? 'var(--ink)' : 'var(--ink-whisper)'}`,
+            borderRadius: 12,
+            fontFamily: 'var(--font-dm)',
+            fontSize: 16,
+            color: 'var(--ink)',
             outline: 'none',
             boxSizing: 'border-box',
-            boxShadow: focused ? '0 0 0 3px rgba(196, 120, 74, 0.1)' : 'none',
-            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+            boxShadow: focused ? '0 0 0 3px rgba(26,23,20,0.05)' : 'none',
+            transition: 'border-color 180ms ease, box-shadow 180ms ease',
           }}
         />
 
         {status === 'error' && (
-          <p style={{
-            fontSize: '13px',
-            color: '#C4784A',
-            fontFamily: "'DM Sans', sans-serif",
-            textAlign: 'center',
-          }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: 'var(--terra)',
+              fontFamily: 'var(--font-dm)',
+              textAlign: 'center',
+            }}
+          >
             {errorMsg}
           </p>
         )}
@@ -98,25 +96,30 @@ export default function WaitlistForm() {
           className="btn-primary"
           style={{
             width: '100%',
-            padding: '15px',
-            borderRadius: '14px',
-            fontSize: '16px',
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontWeight: 700,
-            opacity: !email.trim() ? 0.5 : 1,
+            padding: 16,
+            borderRadius: 12,
+            fontSize: 15,
+            fontFamily: 'var(--font-jakarta)',
+            fontWeight: 600,
+            opacity: !email.trim() ? 0.4 : 1,
             cursor: !email.trim() ? 'not-allowed' : 'pointer',
+            letterSpacing: '-0.01em',
           }}
         >
-          {status === 'loading' ? 'joining...' : 'join the waitlist →'}
+          {status === 'loading' ? 'joining…' : 'join the waitlist →'}
         </button>
 
-        <p style={{
-          textAlign: 'center',
-          fontSize: '12px',
-          color: '#A08C7C',
-          fontFamily: "'DM Sans', sans-serif",
-        }}>
-          no spam. ever. we&apos;ll only email you when genUine is ready.
+        <p
+          className="mono"
+          style={{
+            textAlign: 'center',
+            fontSize: 11,
+            color: 'var(--ink-light)',
+            letterSpacing: '0.04em',
+            marginTop: 4,
+          }}
+        >
+          no spam, ever · we&apos;ll only email when genUine is ready
         </p>
       </div>
     </form>

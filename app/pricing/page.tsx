@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import ScrollReveal from '../components/ScrollReveal';
+import AnimatedHeading from '../components/AnimatedHeading';
+import Magnetic from '../components/Magnetic';
+import ScrollProgress from '../components/ScrollProgress';
 
 const FREE_FEATURES = [
   '3 messages per day',
@@ -23,57 +27,102 @@ const PRO_FEATURES = [
   'everything in free',
 ];
 
+function Check({ color = 'var(--terra)' }: { color?: string }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export default function PricingPage() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
 
   return (
-    <div style={{ backgroundColor: '#FAF9F7', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--paper)', minHeight: '100vh' }}>
+      <ScrollProgress />
       <SiteHeader activePage="pricing" />
 
-      <div style={{ paddingTop: '100px', paddingBottom: '80px', padding: '100px 24px 80px' }}>
-        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-
-          {/* Header */}
-          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
-            {/* Pre-launch banner */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              backgroundColor: 'rgba(242, 169, 34, 0.12)',
-              border: '1px solid rgba(242, 169, 34, 0.3)',
-              borderRadius: '100px', padding: '5px 14px',
-              marginBottom: '20px',
-            }}>
-              <span style={{ fontSize: '14px' }}>🚀</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#B8860B', fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '0.02em' }}>
-                launching soon — join the waitlist for early access
-              </span>
-            </div>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              pricing
-            </p>
-            <h1
+      {/* Hero */}
+      <section style={{ padding: '140px 24px 60px', position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(800px 400px at 20% 0%, rgba(196,120,74,0.08), transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', textAlign: 'center' }}>
+          <ScrollReveal>
+            <div
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(32px, 5vw, 48px)',
-                fontWeight: 800, letterSpacing: '-0.03em',
-                color: '#2D2D2D', marginBottom: '16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '6px 14px',
+                borderRadius: 999,
+                border: '1px solid var(--ink-whisper)',
+                backgroundColor: 'var(--paper-warm)',
+                marginBottom: 24,
               }}
             >
-              start free. go pro when you&apos;re ready.
-            </h1>
-            <p style={{ fontSize: '17px', color: '#6B5E52', lineHeight: 1.6, maxWidth: '440px', margin: '0 auto' }}>
+              <span className="pulse-dot" style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block' }} />
+              <span className="mono" style={{ fontSize: 11, color: 'var(--ink-mid)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                launching soon · waitlist = early access
+              </span>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={60}>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — pricing
+            </p>
+          </ScrollReveal>
+
+          <AnimatedHeading
+            as="h1"
+            text="start free. go pro when you're ready."
+            style={{
+              fontFamily: 'var(--font-jakarta)',
+              fontSize: 'clamp(40px, 6.5vw, 76px)',
+              fontWeight: 700,
+              letterSpacing: '-0.035em',
+              lineHeight: 1.0,
+              color: 'var(--ink)',
+              marginBottom: 22,
+              maxWidth: 900,
+              marginInline: 'auto',
+            }}
+          />
+
+          <ScrollReveal delay={180}>
+            <p
+              className="serif-italic"
+              style={{
+                fontSize: 'clamp(20px, 2vw, 26px)',
+                color: 'var(--ink-mid)',
+                lineHeight: 1.4,
+                maxWidth: 560,
+                margin: '0 auto 40px',
+              }}
+            >
               3 free messages a day, forever. unlimited when you&apos;re serious about it.
             </p>
           </ScrollReveal>
 
           {/* Billing toggle */}
-          <ScrollReveal style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
+          <ScrollReveal delay={240}>
             <div
               style={{
-                display: 'inline-flex', backgroundColor: '#FFFFFF',
-                borderRadius: '100px', padding: '4px',
-                border: '1px solid rgba(196, 120, 74, 0.15)',
-                boxShadow: '0 2px 12px rgba(196, 120, 74, 0.06)',
+                display: 'inline-flex',
+                padding: 4,
+                borderRadius: 999,
+                border: '1px solid var(--ink-whisper)',
+                backgroundColor: 'var(--paper-warm)',
+                position: 'relative',
               }}
             >
               {(['monthly', 'yearly'] as const).map((b) => (
@@ -81,141 +130,264 @@ export default function PricingPage() {
                   key={b}
                   onClick={() => setBilling(b)}
                   style={{
-                    padding: '8px 20px', borderRadius: '100px', fontSize: '14px',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600,
-                    backgroundColor: billing === b ? '#C4784A' : 'transparent',
-                    color: billing === b ? '#FFFFFF' : '#6B5E52',
-                    border: 'none', cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    padding: '10px 22px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontFamily: 'var(--font-jakarta)',
+                    fontWeight: 600,
+                    color: billing === b ? 'var(--paper)' : 'var(--ink-mid)',
+                    backgroundColor: billing === b ? 'var(--ink)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'color 220ms ease, background-color 220ms ease',
+                    position: 'relative',
+                    letterSpacing: '-0.01em',
                   }}
                 >
-                  {b === 'yearly' ? 'yearly (save 31%)' : 'monthly'}
+                  {b === 'yearly' ? 'yearly · save 31%' : 'monthly'}
                 </button>
               ))}
             </div>
           </ScrollReveal>
+        </div>
+      </section>
 
-          {/* Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-
-            {/* Free */}
-            <ScrollReveal delay={0}>
-              <div
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1.5px solid rgba(196, 120, 74, 0.15)',
-                  borderRadius: '24px',
-                  padding: '36px 32px',
-                  height: '100%',
-                }}
-              >
-                <p style={{ fontSize: '13px', fontWeight: 700, color: '#A08C7C', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>free</p>
-                <div style={{ marginBottom: '6px' }}>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '48px', fontWeight: 800, color: '#2D2D2D', letterSpacing: '-0.03em' }}>$0</span>
-                </div>
-                <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '28px' }}>forever, no card needed</p>
-
-                <div style={{ marginBottom: '32px' }}>
-                  {FREE_FEATURES.map(f => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C4784A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '14px', color: '#6B5E52' }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link href="/waitlist">
-                  <button
-                    className="btn-ghost"
-                    style={{ width: '100%', padding: '13px', borderRadius: '13px', fontSize: '15px' }}
-                  >
-                    join waitlist — it&apos;s free
-                  </button>
-                </Link>
+      {/* Cards */}
+      <section style={{ padding: '40px 24px 100px' }}>
+        <div
+          style={{
+            maxWidth: 980,
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 20,
+          }}
+        >
+          {/* Free */}
+          <ScrollReveal>
+            <div
+              className="warm-card"
+              style={{
+                padding: '40px 36px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <p className="eyebrow" style={{ color: 'var(--ink-light)', marginBottom: 14 }}>
+                free
+              </p>
+              <div style={{ marginBottom: 4, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-jakarta)',
+                    fontSize: 64,
+                    fontWeight: 700,
+                    color: 'var(--ink)',
+                    letterSpacing: '-0.035em',
+                    lineHeight: 1,
+                  }}
+                >
+                  $0
+                </span>
               </div>
-            </ScrollReveal>
+              <p className="serif-italic" style={{ fontSize: 15, color: 'var(--ink-light)', marginBottom: 32 }}>
+                forever, no card needed
+              </p>
 
-            {/* Pro */}
-            <ScrollReveal delay={120}>
+              <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {FREE_FEATURES.map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--terra-tint)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Check />
+                    </div>
+                    <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/waitlist" style={{ textDecoration: 'none', marginTop: 'auto' }}>
+                <button
+                  className="btn-ghost"
+                  style={{ width: '100%', padding: 14, borderRadius: 12, fontSize: 14, fontFamily: 'var(--font-jakarta)' }}
+                >
+                  join waitlist — it&apos;s free
+                </button>
+              </Link>
+            </div>
+          </ScrollReveal>
+
+          {/* Pro — dark ink card */}
+          <ScrollReveal delay={120}>
+            <div
+              style={{
+                position: 'relative',
+                backgroundColor: 'var(--ink)',
+                color: 'var(--paper)',
+                borderRadius: 28,
+                padding: '40px 36px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                border: '1px solid rgba(196,120,74,0.3)',
+              }}
+            >
+              {/* Subtle terracotta glow */}
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: -120,
+                  right: -120,
+                  width: 340,
+                  height: 340,
+                  borderRadius: '50%',
+                  background:
+                    'radial-gradient(circle, rgba(196,120,74,0.28) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }}
+              />
+
+              {/* Badge */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #C4784A 0%, #A5623A 100%)',
-                  borderRadius: '24px',
-                  padding: '36px 32px',
-                  height: '100%',
-                  position: 'relative',
-                  boxShadow: '0 12px 40px rgba(196, 120, 74, 0.3)',
+                  position: 'absolute',
+                  top: 20,
+                  right: 20,
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  border: '1px solid rgba(250,248,244,0.2)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--terra)',
                 }}
               >
-                {/* Badge */}
-                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#F2A922', borderRadius: '100px', padding: '4px 14px', fontSize: '11px', fontWeight: 800, color: '#2D2D2D', fontFamily: "'Plus Jakarta Sans', sans-serif", whiteSpace: 'nowrap' }}>
-                  most popular
-                </div>
+                most popular
+              </div>
 
-                <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>pro</p>
+              <p className="eyebrow" style={{ color: 'rgba(250,248,244,0.5)', marginBottom: 14, position: 'relative' }}>
+                pro
+              </p>
 
-                <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
-                  <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '48px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em' }}>
-                    {billing === 'yearly' ? '$8' : '$12'}
-                  </span>
-                  <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', paddingBottom: '10px' }}>/mo</span>
-                </div>
+              <div style={{ marginBottom: 4, display: 'flex', alignItems: 'baseline', gap: 6, position: 'relative' }}>
+                <motion.span
+                  key={billing}
+                  initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+                  style={{
+                    fontFamily: 'var(--font-jakarta)',
+                    fontSize: 64,
+                    fontWeight: 700,
+                    color: 'var(--paper)',
+                    letterSpacing: '-0.035em',
+                    lineHeight: 1,
+                    display: 'inline-block',
+                  }}
+                >
+                  {billing === 'yearly' ? '$8' : '$12'}
+                </motion.span>
+                <span style={{ fontSize: 15, color: 'rgba(250,248,244,0.55)' }}>/mo</span>
+              </div>
 
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '28px' }}>
-                  {billing === 'yearly' ? 'billed $99/year — save 31%' : 'billed monthly'}
-                </p>
+              <p
+                className="serif-italic"
+                style={{ fontSize: 14, color: 'rgba(250,248,244,0.55)', marginBottom: 32, position: 'relative' }}
+              >
+                {billing === 'yearly' ? 'billed $99/year — save 31%' : 'billed monthly'}
+              </p>
 
-                <div style={{ marginBottom: '32px' }}>
-                  {PRO_FEATURES.map(f => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', backgroundColor: 'rgba(242, 169, 34, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F2A922" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)' }}>{f}</span>
+              <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 12, position: 'relative' }}>
+                {PRO_FEATURES.map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(196,120,74,0.18)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Check color="var(--terra)" />
                     </div>
-                  ))}
-                </div>
+                    <span style={{ fontSize: 14, color: 'rgba(250,248,244,0.88)' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
 
-                <Link href="/waitlist">
-                  <button
-                    style={{
-                      width: '100%', padding: '13px', borderRadius: '13px',
-                      backgroundColor: '#FFFFFF', color: '#C4784A',
-                      border: 'none', cursor: 'pointer',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontWeight: 700, fontSize: '15px',
-                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
-                  >
-                    join waitlist — get early access →
-                  </button>
-                </Link>
-
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: '12px' }}>
+              <div style={{ marginTop: 'auto', position: 'relative' }}>
+                <Magnetic strength={0.2}>
+                  <Link href="/waitlist" style={{ textDecoration: 'none' }}>
+                    <button
+                      style={{
+                        width: '100%',
+                        padding: 14,
+                        borderRadius: 12,
+                        backgroundColor: 'var(--paper)',
+                        color: 'var(--ink)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-jakarta)',
+                        fontWeight: 600,
+                        fontSize: 14,
+                        letterSpacing: '-0.01em',
+                        transition: 'transform 180ms var(--ease-out)',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      join waitlist — get early access →
+                    </button>
+                  </Link>
+                </Magnetic>
+                <p
+                  className="mono"
+                  style={{
+                    fontSize: 11,
+                    color: 'rgba(250,248,244,0.45)',
+                    textAlign: 'center',
+                    marginTop: 14,
+                    letterSpacing: '0.04em',
+                  }}
+                >
                   early access · launch discount locked in
                 </p>
               </div>
-            </ScrollReveal>
-          </div>
-
-          {/* FAQ */}
-          <ScrollReveal style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: '#A08C7C', lineHeight: 1.7 }}>
-              questions? reach out on{' '}
-              <a href="https://linkedin.com" style={{ color: '#C4784A', textDecoration: 'none', fontWeight: 600 }}>linkedin</a>
-              {' '}or just try the free version first.
-            </p>
+            </div>
           </ScrollReveal>
         </div>
-      </div>
+      </section>
+
+      {/* Footer note */}
+      <section style={{ padding: '40px 24px 120px', textAlign: 'center' }}>
+        <ScrollReveal>
+          <p className="serif-italic" style={{ fontSize: 18, color: 'var(--ink-mid)', lineHeight: 1.6 }}>
+            questions? reach out on{' '}
+            <a href="https://linkedin.com" style={{ color: 'var(--terra)', textDecoration: 'none', fontWeight: 600, fontStyle: 'normal', fontFamily: 'var(--font-jakarta)' }}>
+              linkedin
+            </a>
+            {' '}or just try the free version first.
+          </p>
+        </ScrollReveal>
+      </section>
 
       <SiteFooter />
     </div>

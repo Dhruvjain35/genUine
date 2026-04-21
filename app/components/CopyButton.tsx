@@ -16,7 +16,6 @@ export default function CopyButton({ text, className = '' }: CopyButtonProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const el = document.createElement('textarea');
       el.value = text;
       document.body.appendChild(el);
@@ -31,22 +30,34 @@ export default function CopyButton({ text, className = '' }: CopyButtonProps) {
   return (
     <button
       onClick={handleCopy}
-      className={`copy-btn flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${className}`}
+      className={`copy-btn mono ${className}`}
       style={{
-        borderColor: copied ? '#F0A824' : '#DCDCDC',
-        color: copied ? '#F0A824' : '#888',
-        backgroundColor: copied ? 'rgba(240, 168, 36, 0.06)' : 'transparent',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 11,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        padding: '7px 12px',
+        borderRadius: 8,
+        border: `1px solid ${copied ? 'var(--terra)' : 'var(--ink-whisper)'}`,
+        color: copied ? 'var(--terra)' : 'var(--ink-mid)',
+        backgroundColor: copied ? 'var(--terra-tint)' : 'transparent',
+        transition: 'background-color 180ms ease, color 180ms ease, border-color 180ms ease',
+        cursor: 'pointer',
       }}
       title="Copy message"
     >
       {copied ? (
         <>
-          <span className="check-in" style={{ display: 'inline-block' }}>✓</span>
-          <span>copied!</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>copied</span>
         </>
       ) : (
         <>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
           </svg>

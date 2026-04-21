@@ -1,134 +1,311 @@
+'use client';
+
 import Link from 'next/link';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import ScrollReveal from '../components/ScrollReveal';
+import AnimatedHeading from '../components/AnimatedHeading';
+import Magnetic from '../components/Magnetic';
+import ScrollProgress from '../components/ScrollProgress';
 
 export default function AboutPage() {
   return (
-    <div style={{ backgroundColor: '#FAF9F7', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--paper)', minHeight: '100vh' }}>
+      <ScrollProgress />
       <SiteHeader activePage="about" />
 
-      <div style={{ paddingTop: '100px', paddingBottom: '80px', padding: '100px 24px 80px' }}>
-        <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-
-          {/* Header */}
+      {/* Hero */}
+      <section style={{ padding: '140px 24px 80px', position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(1000px 420px at 80% 0%, rgba(196,120,74,0.08), transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ maxWidth: 820, margin: '0 auto', position: 'relative' }}>
           <ScrollReveal>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              about genUine
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — about gen<span style={{ fontWeight: 800 }}>U</span>ine
             </p>
-            <h1
+          </ScrollReveal>
+
+          <AnimatedHeading
+            as="h1"
+            text="built because cold messages are the worst."
+            style={{
+              fontFamily: 'var(--font-jakarta)',
+              fontSize: 'clamp(44px, 7vw, 84px)',
+              fontWeight: 700,
+              letterSpacing: '-0.035em',
+              lineHeight: 0.98,
+              color: 'var(--ink)',
+              marginBottom: 28,
+            }}
+          />
+
+          <ScrollReveal delay={180}>
+            <p
+              className="serif-italic"
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(32px, 5vw, 48px)',
-                fontWeight: 800, letterSpacing: '-0.03em',
-                color: '#2D2D2D', marginBottom: '24px', lineHeight: 1.15,
+                fontSize: 'clamp(22px, 2.4vw, 30px)',
+                color: 'var(--ink-mid)',
+                lineHeight: 1.35,
+                maxWidth: 680,
               }}
             >
-              built because cold messages are the worst.
-            </h1>
+              a story about blank boxes, try-hard openers, and the quiet belief that you already
+              know how to say it.
+            </p>
           </ScrollReveal>
+        </div>
+      </section>
 
-          {/* Story */}
+      {/* Story */}
+      <section style={{ padding: '40px 24px 80px' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <ScrollReveal delay={80}>
-            <div style={{ fontSize: '16px', color: '#6B5E52', lineHeight: 1.8, marginBottom: '40px' }}>
-              <p style={{ marginBottom: '16px' }}>
-                every week i&apos;d sit down to message someone on linkedin and just stare at the blank box. i knew what i wanted to say but every attempt came out either too corporate, too try-hard, or obviously AI-generated.
-              </p>
-              <p style={{ marginBottom: '16px' }}>
-                the tools that existed would write you a "professional" message. which is a nice way of saying: a message that sounds exactly like everyone else&apos;s message.
-              </p>
-              <p style={{ marginBottom: '16px' }}>
-                genUine started as a simple idea: what if an AI actually learned <em>how you specifically talk</em>, not just how to sound human in general? your lowercase. your punctuation habits. the specific way you start a sentence or end a thought.
-              </p>
-              <p>
-                that&apos;s what we&apos;re building. messages that sound like you on your best day, not a template that sounds like nobody.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          {/* The name */}
-          <ScrollReveal delay={120}>
             <div
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid rgba(196, 120, 74, 0.15)',
-                borderRadius: '20px',
-                padding: '28px',
-                marginBottom: '48px',
-                boxShadow: '0 4px 20px rgba(196, 120, 74, 0.06)',
+                fontFamily: 'var(--font-dm)',
+                fontSize: 19,
+                color: 'var(--ink-soft)',
+                lineHeight: 1.75,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 22,
               }}
             >
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#C4784A', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                about the name
+              <p>
+                every week i&apos;d sit down to message someone on linkedin and just stare at the
+                blank box. i knew what i wanted to say but every attempt came out either too
+                corporate, too try-hard, or obviously AI-generated.
               </p>
-              <p style={{ fontSize: '15px', color: '#2D2D2D', lineHeight: 1.7 }}>
-                genUine was named by Noah Oh. the <strong style={{ color: '#C4784A' }}>U</strong> in every conversation is what makes it real. it&apos;s not just genuine as in authentic — it&apos;s gen<strong>U</strong>ine as in <em>you</em> are the point.
+              <p>
+                the tools that existed would write you a{' '}
+                <span className="serif-italic" style={{ color: 'var(--ink)' }}>
+                  &ldquo;professional&rdquo;
+                </span>{' '}
+                message. which is a nice way of saying: a message that sounds exactly like everyone
+                else&apos;s message.
+              </p>
+              <p>
+                genUine started as a simple idea: what if an AI actually learned{' '}
+                <em className="serif-italic" style={{ color: 'var(--ink)' }}>
+                  how you specifically talk
+                </em>
+                , not just how to sound human in general? your lowercase. your punctuation habits.
+                the specific way you start a sentence or end a thought.
+              </p>
+              <p>
+                that&apos;s what we&apos;re building. messages that sound like you on your best
+                day, not a template that sounds like nobody.
               </p>
             </div>
           </ScrollReveal>
+        </div>
+      </section>
 
-          {/* Team */}
-          <ScrollReveal delay={160}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '20px' }}>
-              the team
+      {/* The name — oversized editorial pullquote */}
+      <section style={{ padding: '80px 24px', position: 'relative' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal>
+            <div
+              style={{
+                borderTop: '1px solid var(--ink-whisper)',
+                borderBottom: '1px solid var(--ink-whisper)',
+                padding: '56px 0',
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1fr)',
+                gap: 24,
+              }}
+            >
+              <p className="eyebrow" style={{ color: 'var(--ink-light)' }}>
+                about the name
+              </p>
+              <p
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontStyle: 'italic',
+                  fontSize: 'clamp(32px, 4.5vw, 56px)',
+                  letterSpacing: '-0.015em',
+                  color: 'var(--ink)',
+                  lineHeight: 1.15,
+                  fontWeight: 400,
+                }}
+              >
+                &ldquo;genUine was named by Noah Oh. the{' '}
+                <span style={{ color: 'var(--terra)', fontStyle: 'normal', fontWeight: 600 }}>
+                  U
+                </span>{' '}
+                in every conversation is what makes it real.&rdquo;
+              </p>
+              <p style={{ fontSize: 16, color: 'var(--ink-mid)', lineHeight: 1.6, maxWidth: 640 }}>
+                it&apos;s not just genuine as in authentic — it&apos;s gen
+                <strong style={{ color: 'var(--terra)' }}>U</strong>ine as in{' '}
+                <em className="serif-italic" style={{ color: 'var(--ink)' }}>
+                  you
+                </em>{' '}
+                are the point.
+              </p>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Team */}
+      <section style={{ padding: '80px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal>
+            <p className="eyebrow" style={{ color: 'var(--ink-light)', marginBottom: 20 }}>
+              — the team
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '48px' }}>
-              {[
-                { name: 'Shaan', role: 'Founder', desc: 'building things that feel human. obsessed with the gap between what people mean and what they send.' },
-                { name: 'Noah Oh', role: 'Head of Design', desc: 'the reason genUine looks the way it does. also the reason the U is capitalized.' },
-              ].map(person => (
+            <h2
+              style={{
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 4.2vw, 56px)',
+                fontWeight: 600,
+                letterSpacing: '-0.03em',
+                color: 'var(--ink)',
+                lineHeight: 1.05,
+                marginBottom: 48,
+                maxWidth: 720,
+              }}
+            >
+              two people, one obsession: the gap between{' '}
+              <span className="serif-italic">what you mean</span> and{' '}
+              <span className="serif-italic">what you send</span>.
+            </h2>
+          </ScrollReveal>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: 24,
+            }}
+          >
+            {[
+              {
+                name: 'Shaan',
+                role: 'Founder',
+                desc: 'building things that feel human. obsessed with the gap between what people mean and what they send.',
+                no: '01',
+              },
+              {
+                name: 'Noah Oh',
+                role: 'Head of Design',
+                desc: 'the reason genUine looks the way it does. also the reason the U is capitalized.',
+                no: '02',
+              },
+            ].map((person, i) => (
+              <ScrollReveal key={person.name} delay={120 + i * 80}>
                 <div
-                  key={person.name}
+                  className="warm-card"
                   style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid rgba(196, 120, 74, 0.1)',
-                    borderRadius: '16px',
-                    padding: '20px 24px',
+                    padding: 32,
+                    minHeight: 240,
                     display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '16px',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                 >
                   <div
                     style={{
-                      width: 44, height: 44, borderRadius: '50%',
-                      backgroundColor: 'rgba(196, 120, 74, 0.1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
                     }}
                   >
-                    <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '18px', color: '#C4784A' }}>
-                      {person.name[0]}
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--ink-light)',
+                        letterSpacing: '0.1em',
+                      }}
+                    >
+                      {person.no}
+                    </span>
+                    <span
+                      className="eyebrow"
+                      style={{ color: 'var(--terra)', fontSize: 11 }}
+                    >
+                      {person.role}
                     </span>
                   </div>
                   <div>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '16px', color: '#2D2D2D', marginBottom: '2px' }}>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-jakarta)',
+                        fontWeight: 700,
+                        fontSize: 32,
+                        letterSpacing: '-0.025em',
+                        color: 'var(--ink)',
+                        marginBottom: 12,
+                      }}
+                    >
                       {person.name}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, marginBottom: '8px' }}>{person.role}</p>
-                    <p style={{ fontSize: '14px', color: '#6B5E52', lineHeight: 1.6 }}>{person.desc}</p>
+                    <p
+                      style={{
+                        fontSize: 15,
+                        color: 'var(--ink-mid)',
+                        lineHeight: 1.6,
+                        maxWidth: 360,
+                      }}
+                    >
+                      {person.desc}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </ScrollReveal>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* CTA */}
-          <ScrollReveal delay={200} style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '16px', color: '#6B5E52', marginBottom: '24px', lineHeight: 1.6 }}>
+      {/* CTA */}
+      <section style={{ padding: '120px 24px 140px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <ScrollReveal>
+            <p
+              className="serif-italic"
+              style={{
+                fontSize: 'clamp(28px, 4vw, 44px)',
+                color: 'var(--ink)',
+                lineHeight: 1.2,
+                marginBottom: 36,
+              }}
+            >
               want to try it?
             </p>
-            <Link href="/app">
-              <button
-                className="btn-primary"
-                style={{ padding: '14px 36px', borderRadius: '14px', fontSize: '16px' }}
-              >
-                try genUine — it&apos;s free →
-              </button>
-            </Link>
+          </ScrollReveal>
+          <ScrollReveal delay={120}>
+            <Magnetic strength={0.28}>
+              <Link href="/app" style={{ textDecoration: 'none' }}>
+                <span
+                  className="btn-primary"
+                  style={{
+                    padding: '18px 34px',
+                    borderRadius: 999,
+                    fontSize: 16,
+                    fontFamily: 'var(--font-jakarta)',
+                  }}
+                >
+                  try gen<span style={{ color: 'var(--terra)' }}>U</span>ine — it&apos;s free
+                  <span aria-hidden style={{ marginLeft: 8 }}>→</span>
+                </span>
+              </Link>
+            </Magnetic>
           </ScrollReveal>
         </div>
-      </div>
+      </section>
 
       <SiteFooter />
     </div>

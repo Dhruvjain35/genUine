@@ -2,75 +2,177 @@
 
 import Link from 'next/link';
 
+const PRODUCT = [
+  { href: '/app', label: 'try genUine' },
+  { href: '/pricing', label: 'pricing' },
+  { href: '/dashboard', label: 'dashboard' },
+];
+
+const COMPANY = [
+  { href: '/about', label: 'about' },
+  { href: '/waitlist', label: 'waitlist' },
+  { href: '/', label: 'home' },
+];
+
 export default function SiteFooter() {
   return (
     <footer
       style={{
-        backgroundColor: '#FAF9F7',
-        borderTop: '1px solid rgba(196, 120, 74, 0.1)',
-        padding: '48px 24px 32px',
+        backgroundColor: 'var(--paper-warm)',
+        borderTop: '1px solid var(--ink-whisper)',
+        padding: '72px 24px 36px',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      {/* Oversized wordmark — design-forward, motionsites-style */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: '50%',
+          bottom: '-28%',
+          transform: 'translateX(-50%)',
+          fontFamily: 'var(--font-jakarta)',
+          fontSize: 'clamp(120px, 28vw, 360px)',
+          fontWeight: 800,
+          color: 'transparent',
+          WebkitTextStroke: '1px rgba(26,23,20,0.08)',
+          letterSpacing: '-0.04em',
+          lineHeight: 0.8,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        gen<span style={{ WebkitTextStroke: '1px rgba(196,120,74,0.28)' }}>U</span>ine
+      </div>
+
+      <div style={{ position: 'relative', maxWidth: '1180px', margin: '0 auto' }}>
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '32px',
-            marginBottom: '40px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '48px',
+            marginBottom: '80px',
           }}
         >
           {/* Brand */}
           <div>
             <div
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontWeight: 800,
-                fontSize: '24px',
-                color: '#2D2D2D',
-                letterSpacing: '-0.02em',
-                marginBottom: '8px',
+                fontFamily: 'var(--font-jakarta)',
+                fontWeight: 700,
+                fontSize: '22px',
+                color: 'var(--ink)',
+                letterSpacing: '-0.025em',
+                marginBottom: 12,
               }}
             >
-              gen<span style={{ color: '#C4784A' }}>U</span>ine
+              gen<span style={{ color: 'var(--terra)' }}>U</span>ine
             </div>
-            <p style={{ fontSize: '13px', color: '#A08C7C', maxWidth: '200px', lineHeight: 1.6 }}>
+            <p
+              className="serif-italic"
+              style={{
+                fontSize: 18,
+                color: 'var(--ink-mid)',
+                maxWidth: 240,
+                lineHeight: 1.4,
+              }}
+            >
               the U in every conversation.
             </p>
           </div>
 
-          {/* Links */}
-          <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#A08C7C', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>product</p>
-              {[
-                { href: '/app', label: 'try genUine' },
-                { href: '/pricing', label: 'pricing' },
-              ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ display: 'block', fontSize: '14px', color: '#6B5E52', textDecoration: 'none', marginBottom: '8px', transition: 'color 0.15s' }}
-                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.color = '#C4784A'}
-                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.color = '#6B5E52'}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#A08C7C', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>company</p>
-              {[
-                { href: '/about', label: 'about' },
-                { href: '/', label: 'home' },
-              ].map(({ href, label }) => (
-                <Link key={href} href={href} style={{ display: 'block', fontSize: '14px', color: '#6B5E52', textDecoration: 'none', marginBottom: '8px', transition: 'color 0.15s' }}
-                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.color = '#C4784A'}
-                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.color = '#6B5E52'}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
+          {/* Product */}
+          <div>
+            <p className="eyebrow" style={{ color: 'var(--ink-light)', marginBottom: 18 }}>
+              product
+            </p>
+            {PRODUCT.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  display: 'block',
+                  fontSize: 15,
+                  color: 'var(--ink-soft)',
+                  textDecoration: 'none',
+                  marginBottom: 10,
+                  transition: 'color 220ms ease, transform 220ms var(--ease-out)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--terra)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--ink-soft)';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Company */}
+          <div>
+            <p className="eyebrow" style={{ color: 'var(--ink-light)', marginBottom: 18 }}>
+              company
+            </p>
+            {COMPANY.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  display: 'block',
+                  fontSize: 15,
+                  color: 'var(--ink-soft)',
+                  textDecoration: 'none',
+                  marginBottom: 10,
+                  transition: 'color 220ms ease, transform 220ms var(--ease-out)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--terra)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--ink-soft)';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Pointer */}
+          <div>
+            <p className="eyebrow" style={{ color: 'var(--ink-light)', marginBottom: 18 }}>
+              currently
+            </p>
+            <p style={{ fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.6, marginBottom: 12 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--terra)',
+                  marginRight: 10,
+                  verticalAlign: 'middle',
+                }}
+                className="pulse-dot"
+              />
+              onboarding waitlist
+            </p>
+            <Link
+              href="/waitlist"
+              className="nav-link"
+              style={{ fontSize: 14, fontFamily: 'var(--font-jakarta)', fontWeight: 500 }}
+            >
+              reserve your spot →
+            </Link>
           </div>
         </div>
 
@@ -81,16 +183,22 @@ export default function SiteFooter() {
             flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '12px',
-            paddingTop: '24px',
-            borderTop: '1px solid rgba(196, 120, 74, 0.08)',
+            gap: 12,
+            paddingTop: 24,
+            borderTop: '1px solid var(--ink-whisper)',
           }}
         >
-          <p style={{ fontSize: '13px', color: '#A08C7C' }}>
-            built with ❤️ by shaan
+          <p
+            className="mono"
+            style={{ fontSize: 12, color: 'var(--ink-light)', letterSpacing: '0.02em' }}
+          >
+            © {new Date().getFullYear()} genUine · built by shaan
           </p>
-          <p style={{ fontSize: '13px', color: '#C4784A', fontWeight: 500 }}>
-            genUine — the U in every conversation
+          <p
+            className="serif-italic"
+            style={{ fontSize: 15, color: 'var(--ink-soft)' }}
+          >
+            see u later — shaan
           </p>
         </div>
       </div>

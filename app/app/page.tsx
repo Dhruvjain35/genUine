@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import VoiceCapture from '../components/VoiceCapture';
 
 // ── Types ──────────────────────────────────────────────
@@ -23,7 +24,6 @@ interface MessageResult {
   messageB: { text: string; angle: string; curiosityPoint: string };
 }
 
-
 const RECIPIENT_TYPES = [
   { value: 'founder', label: 'founder / entrepreneur' },
   { value: 'student', label: 'student / peer' },
@@ -35,17 +35,34 @@ const RECIPIENT_TYPES = [
 const TONES = ['casual', 'formal', 'curious'];
 
 const LOADING_MESSAGES = [
-  'reading their profile...',
-  'finding common ground...',
-  'matching your voice...',
-  'crafting something genuine...',
+  'reading their profile…',
+  'finding common ground…',
+  'matching your voice…',
+  'crafting something genuine…',
 ];
 
 const FREE_LIMIT = 3;
 
-// ── Loading Indicator ───────────────────────────────────
+// ── Mini logo (inline, consistent with SiteHeader) ──
 
-function LoadingSpinner() {
+function MiniLogo() {
+  return (
+    <Link href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="#1A1714" strokeWidth="1.4" />
+        <path d="M6.5 12.5a5.5 5.5 0 0 0 11 0V10a5.5 5.5 0 0 0-11 0" stroke="#C4784A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <circle cx="12" cy="12" r="1.6" fill="#1A1714" />
+      </svg>
+      <span style={{ fontFamily: 'var(--font-jakarta)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+        gen<span style={{ color: 'var(--terra)' }}>U</span>ine
+      </span>
+    </Link>
+  );
+}
+
+// ── Loading indicator ──
+
+function LoadingIndicator({ small = false }: { small?: boolean }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -54,71 +71,95 @@ function LoadingSpinner() {
   }, []);
 
   return (
-    <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
-        <span className="loading-dot" />
-        <span className="loading-dot" />
-        <span className="loading-dot" />
+    <div style={{ textAlign: 'center', padding: small ? '20px 0' : '60px 24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: small ? 12 : 20 }}>
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            animate={{ opacity: [0.25, 1, 0.25], y: [0, -3, 0] }}
+            transition={{ duration: 1.05, repeat: Infinity, delay: i * 0.14, ease: 'easeInOut' }}
+            style={{
+              width: small ? 5 : 6,
+              height: small ? 5 : 6,
+              borderRadius: '50%',
+              backgroundColor: 'var(--terra)',
+              display: 'inline-block',
+            }}
+          />
+        ))}
       </div>
-      <p
-        style={{
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontSize: '15px', fontWeight: 600, color: '#6B5E52',
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        {LOADING_MESSAGES[idx]}
-      </p>
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={idx}
+          initial={{ opacity: 0, y: 6, filter: 'blur(3px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: -6, filter: 'blur(3px)' }}
+          transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+          className="serif-italic"
+          style={{
+            fontSize: small ? 13 : 16,
+            color: 'var(--ink-mid)',
+          }}
+        >
+          {LOADING_MESSAGES[idx]}
+        </motion.p>
+      </AnimatePresence>
     </div>
   );
 }
 
-// ── Copy Button ─────────────────────────────────────────
+// ── Copy button ──
 
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, accent = 'var(--terra)' }: { text: string; accent?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
       document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <button
       onClick={handleCopy}
-      className="copy-btn"
       style={{
-        display: 'flex', alignItems: 'center', gap: '6px',
-        padding: '8px 16px', borderRadius: '10px',
-        border: copied ? '1px solid #C4784A' : '1px solid #E8DDD5',
-        backgroundColor: copied ? 'rgba(196, 120, 74, 0.08)' : 'transparent',
-        color: copied ? '#C4784A' : '#A08C7C',
-        fontSize: '13px', fontWeight: 600,
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        cursor: 'pointer', transition: 'all 0.2s ease',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '8px 16px',
+        borderRadius: 10,
+        border: `1px solid ${copied ? accent : 'var(--ink-whisper)'}`,
+        backgroundColor: copied ? 'var(--terra-tint)' : 'transparent',
+        color: copied ? accent : 'var(--ink-mid)',
+        fontSize: 12,
+        fontWeight: 500,
+        fontFamily: 'var(--font-jakarta)',
+        cursor: 'pointer',
+        transition: 'background-color 220ms ease, color 220ms ease, border-color 220ms ease',
+        letterSpacing: '0.02em',
       }}
     >
       {copied ? (
         <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          copied!
+          copied
         </>
       ) : (
         <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
           copy
         </>
@@ -127,176 +168,255 @@ function CopyBtn({ text }: { text: string }) {
   );
 }
 
-// ── Result Cards ────────────────────────────────────────
+// ── Result cards ──
 
 function ResultCards({ result, onTryAgain }: { result: MessageResult; onTryAgain: () => void }) {
   const [expandedA, setExpandedA] = useState(false);
   const [expandedB, setExpandedB] = useState(false);
 
   return (
-    <div className="fade-scale">
+    <motion.div
+      initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+    >
       {/* Voice profile chip */}
       <div
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          backgroundColor: 'rgba(196, 120, 74, 0.08)',
-          border: '1px solid rgba(196, 120, 74, 0.15)',
-          borderRadius: '100px', padding: '6px 14px',
-          marginBottom: '24px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '6px 14px',
+          borderRadius: 999,
+          border: '1px solid var(--ink-whisper)',
+          backgroundColor: 'var(--paper-warm)',
+          marginBottom: 28,
         }}
       >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C4784A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" />
-        </svg>
-        <span style={{ fontSize: '12px', color: '#6B5E52', fontFamily: "'DM Sans', sans-serif" }}>
-          your voice: <strong style={{ color: '#C4784A' }}>{result.voiceProfile.tone}</strong>
+        <span className="pulse-dot" style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block' }} />
+        <span className="mono" style={{ fontSize: 11, color: 'var(--ink-mid)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          your voice · <strong style={{ color: 'var(--terra)', fontWeight: 600 }}>{result.voiceProfile.tone}</strong>
           {result.voiceProfile.energy ? ` · ${result.voiceProfile.energy}` : ''}
         </span>
       </div>
 
-      {/* Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        {/* Card A */}
-        <div
-          className="result-card"
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 28 }}>
+        {/* Card A — common ground */}
+        <motion.div
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '1.5px solid rgba(196, 120, 74, 0.2)',
-            borderRadius: '20px',
-            padding: '24px',
-            boxShadow: '0 4px 24px rgba(196, 120, 74, 0.08)',
+            backgroundColor: 'var(--paper)',
+            border: '1px solid var(--ink-whisper)',
+            borderRadius: 20,
+            padding: 28,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <span
-              style={{
-                backgroundColor: 'rgba(196, 120, 74, 0.1)',
-                color: '#C4784A',
-                fontSize: '11px', fontWeight: 700,
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                letterSpacing: '0.06em', textTransform: 'uppercase',
-                padding: '4px 10px', borderRadius: '100px',
-              }}
-            >
-              common ground
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <span className="eyebrow" style={{ color: 'var(--terra)', fontSize: 10 }}>
+              — common ground
             </span>
           </div>
-          <p style={{ fontSize: '15px', color: '#2D2D2D', lineHeight: 1.7, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+          <p style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.7, marginBottom: 24, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-dm)' }}>
             {result.messageA.text}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <CopyBtn text={result.messageA.text} />
             <button
               onClick={() => setExpandedA(!expandedA)}
+              className="mono"
               style={{
-                fontSize: '12px', color: '#A08C7C', background: 'none', border: 'none',
-                cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-                display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: 11,
+                color: 'var(--ink-light)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
               }}
             >
-              why this works {expandedA ? '↑' : '↓'}
+              why this works {expandedA ? '−' : '+'}
             </button>
           </div>
-          {expandedA && (
-            <div
-              className="fade-up"
-              style={{
-                marginTop: '12px', padding: '12px', borderRadius: '10px',
-                backgroundColor: 'rgba(196, 120, 74, 0.05)',
-                fontSize: '13px', color: '#6B5E52', lineHeight: 1.6,
-              }}
-            >
-              <strong style={{ color: '#C4784A', display: 'block', marginBottom: '4px' }}>angle:</strong>
-              {result.messageA.angle}
-              {result.messageA.commonGround && (
-                <span style={{ display: 'block', marginTop: '6px', color: '#A08C7C' }}>
-                  common ground: {result.messageA.commonGround}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+          <AnimatePresence initial={false}>
+            {expandedA && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: 14,
+                    borderRadius: 10,
+                    backgroundColor: 'var(--paper-warm)',
+                    fontSize: 13,
+                    color: 'var(--ink-soft)',
+                    lineHeight: 1.6,
+                    border: '1px solid var(--ink-whisper)',
+                  }}
+                >
+                  <strong style={{ color: 'var(--terra)', display: 'block', marginBottom: 4, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'var(--font-jakarta)' }}>
+                    angle
+                  </strong>
+                  {result.messageA.angle}
+                  {result.messageA.commonGround && (
+                    <span style={{ display: 'block', marginTop: 8, color: 'var(--ink-light)', fontStyle: 'italic', fontFamily: 'var(--font-serif)' }}>
+                      common ground: {result.messageA.commonGround}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
-        {/* Card B */}
-        <div
-          className="result-card"
+        {/* Card B — genuine curiosity (dark ink accent) */}
+        <motion.div
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '1.5px solid rgba(242, 169, 34, 0.25)',
-            borderRadius: '20px',
-            padding: '24px',
-            boxShadow: '0 4px 24px rgba(242, 169, 34, 0.08)',
+            backgroundColor: 'var(--ink)',
+            color: 'var(--paper)',
+            border: '1px solid rgba(196,120,74,0.3)',
+            borderRadius: 20,
+            padding: 28,
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <span
-              style={{
-                backgroundColor: 'rgba(242, 169, 34, 0.12)',
-                color: '#B8860B',
-                fontSize: '11px', fontWeight: 700,
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                letterSpacing: '0.06em', textTransform: 'uppercase',
-                padding: '4px 10px', borderRadius: '100px',
-              }}
-            >
-              genuine curiosity
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              top: -80,
+              right: -80,
+              width: 260,
+              height: 260,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(196,120,74,0.22) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, position: 'relative' }}>
+            <span className="eyebrow" style={{ color: 'var(--terra)', fontSize: 10 }}>
+              — genuine curiosity
             </span>
           </div>
-          <p style={{ fontSize: '15px', color: '#2D2D2D', lineHeight: 1.7, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+          <p
+            style={{
+              fontSize: 15,
+              color: 'var(--paper)',
+              lineHeight: 1.7,
+              marginBottom: 24,
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'var(--font-dm)',
+              position: 'relative',
+            }}
+          >
             {result.messageB.text}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <CopyBtn text={result.messageB.text} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', position: 'relative' }}>
+            <button
+              onClick={() => { navigator.clipboard.writeText(result.messageB.text); }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 16px',
+                borderRadius: 10,
+                border: '1px solid rgba(250,248,244,0.2)',
+                backgroundColor: 'transparent',
+                color: 'rgba(250,248,244,0.85)',
+                fontSize: 12,
+                fontFamily: 'var(--font-jakarta)',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background-color 200ms ease',
+                letterSpacing: '0.02em',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(250,248,244,0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              copy
+            </button>
             <button
               onClick={() => setExpandedB(!expandedB)}
+              className="mono"
               style={{
-                fontSize: '12px', color: '#A08C7C', background: 'none', border: 'none',
-                cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-                display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: 11,
+                color: 'rgba(250,248,244,0.5)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
               }}
             >
-              why this works {expandedB ? '↑' : '↓'}
+              why this works {expandedB ? '−' : '+'}
             </button>
           </div>
-          {expandedB && (
-            <div
-              className="fade-up"
-              style={{
-                marginTop: '12px', padding: '12px', borderRadius: '10px',
-                backgroundColor: 'rgba(242, 169, 34, 0.06)',
-                fontSize: '13px', color: '#6B5E52', lineHeight: 1.6,
-              }}
-            >
-              <strong style={{ color: '#B8860B', display: 'block', marginBottom: '4px' }}>angle:</strong>
-              {result.messageB.angle}
-              {result.messageB.curiosityPoint && (
-                <span style={{ display: 'block', marginTop: '6px', color: '#A08C7C' }}>
-                  curiosity: {result.messageB.curiosityPoint}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+          <AnimatePresence initial={false}>
+            {expandedB && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                style={{ overflow: 'hidden', position: 'relative' }}
+              >
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: 14,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(250,248,244,0.06)',
+                    fontSize: 13,
+                    color: 'rgba(250,248,244,0.85)',
+                    lineHeight: 1.6,
+                    border: '1px solid rgba(250,248,244,0.12)',
+                  }}
+                >
+                  <strong style={{ color: 'var(--terra)', display: 'block', marginBottom: 4, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'var(--font-jakarta)' }}>
+                    angle
+                  </strong>
+                  {result.messageB.angle}
+                  {result.messageB.curiosityPoint && (
+                    <span style={{ display: 'block', marginTop: 8, color: 'rgba(250,248,244,0.6)', fontStyle: 'italic', fontFamily: 'var(--font-serif)' }}>
+                      curiosity: {result.messageB.curiosityPoint}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button
           onClick={onTryAgain}
           className="btn-ghost"
-          style={{ padding: '10px 24px', borderRadius: '12px', fontSize: '14px' }}
+          style={{ padding: '12px 22px', borderRadius: 999, fontSize: 13, fontFamily: 'var(--font-jakarta)' }}
         >
           ← try again
         </button>
-        <p style={{ fontSize: '13px', color: '#A08C7C', alignSelf: 'center' }}>
+        <p className="serif-italic" style={{ fontSize: 14, color: 'var(--ink-mid)' }}>
           not quite? go back and adjust the profile or tone.
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-// ── Main App Page ───────────────────────────────────────
+// ── Main app page ──
 
 export default function AppPage() {
   const [phase, setPhase] = useState<'loading' | 'voice-setup' | 'voice-confirm' | 'generator' | 'results' | 'limit'>('loading');
@@ -322,9 +442,8 @@ export default function AppPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const messagesRemaining = (isPro || isAdmin) ? Infinity : Math.max(0, FREE_LIMIT - messagesUsed);
+  const messagesRemaining = isPro || isAdmin ? Infinity : Math.max(0, FREE_LIMIT - messagesUsed);
 
-  // ── Load persisted state ──
   useEffect(() => {
     try {
       const savedProfile = localStorage.getItem('genuine_voice_profile');
@@ -355,7 +474,6 @@ export default function AppPage() {
         setPhase('voice-setup');
       }
 
-      // Check success redirect from Stripe
       const params = new URLSearchParams(window.location.search);
       if (params.get('success') === 'true') {
         localStorage.setItem('genuine_is_pro', 'true');
@@ -366,13 +484,10 @@ export default function AppPage() {
       setPhase('voice-setup');
     }
 
-    // Listen for admin grant from SiteHeader
     const handleAdminGrant = () => setIsAdmin(true);
     window.addEventListener('genuine_admin_granted', handleAdminGrant);
     return () => window.removeEventListener('genuine_admin_granted', handleAdminGrant);
   }, []);
-
-  // ── Voice capture handlers ──
 
   const handleVoiceCaptureComplete = (profile: VoiceProfile, examples: string[]) => {
     const full = { ...profile, examples };
@@ -388,9 +503,7 @@ export default function AppPage() {
     setPhase('generator');
   };
 
-  const handleVoiceAdjust = () => {
-    setPhase('voice-setup');
-  };
+  const handleVoiceAdjust = () => setPhase('voice-setup');
 
   const handleSkipVoice = (skipTone: string) => {
     const minimalProfile: VoiceProfile = { tone: skipTone, overallStyle: `${skipTone} tone`, skipped: true } as VoiceProfile;
@@ -406,14 +519,15 @@ export default function AppPage() {
     setPhase('voice-setup');
   };
 
-  // ── Message generation ──
-
   const handleGenerate = useCallback(async () => {
     if (!rawProfile.trim()) {
       setError('paste their linkedin profile first.');
       return;
     }
-    if (messagesRemaining <= 0) { setPhase('limit'); return; }
+    if (messagesRemaining <= 0) {
+      setPhase('limit');
+      return;
+    }
 
     setError('');
     setIsGenerating(true);
@@ -434,14 +548,16 @@ export default function AppPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'something went wrong. try again?'); return; }
+      if (!res.ok) {
+        setError(data.error || 'something went wrong. try again?');
+        return;
+      }
 
       setResult(data);
       const newCount = messagesUsed + 1;
       setMessagesUsed(newCount);
       localStorage.setItem('genuine_messages_today', newCount.toString());
 
-      // Save to message history
       try {
         const history = JSON.parse(localStorage.getItem('genuine_message_history') || '[]');
         history.unshift({
@@ -481,9 +597,8 @@ export default function AppPage() {
         body: JSON.stringify({ url: linkedinUrl.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setFetchError(data.error || 'failed to fetch profile.');
-      } else {
+      if (!res.ok) setFetchError(data.error || 'failed to fetch profile.');
+      else {
         setRawProfile(data.rawProfile);
         setFetchedPreview(data.preview);
       }
@@ -494,90 +609,119 @@ export default function AppPage() {
     }
   };
 
-  // ── Field helpers ──
-
+  // Field styles
   const fieldStyle: React.CSSProperties = {
-    width: '100%', padding: '12px 16px',
-    backgroundColor: '#FFFFFF',
-    border: '1.5px solid #E8DDD5',
-    borderRadius: '12px',
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: '14px', color: '#2D2D2D',
-    outline: 'none', resize: 'none',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    width: '100%',
+    padding: '14px 16px',
+    backgroundColor: 'var(--paper)',
+    border: '1px solid var(--ink-whisper)',
+    borderRadius: 12,
+    fontFamily: 'var(--font-dm)',
+    fontSize: 14,
+    color: 'var(--ink)',
+    outline: 'none',
+    resize: 'none',
+    transition: 'border-color 180ms ease, box-shadow 180ms ease',
+    boxSizing: 'border-box',
   };
 
   const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '12px', fontWeight: 600,
-    color: '#6B5E52', marginBottom: '6px',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    textTransform: 'uppercase', letterSpacing: '0.06em',
+    display: 'block',
+    fontSize: 10,
+    fontWeight: 600,
+    color: 'var(--ink-light)',
+    marginBottom: 10,
+    fontFamily: 'var(--font-mono)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
   };
 
-  // ── Render: Loading ──
-
+  // ── Loading ──
   if (phase === 'loading') {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <LoadingSpinner />
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <LoadingIndicator />
       </div>
     );
   }
 
-  // ── Render: Limit ──
-
+  // ── Limit ──
   if (phase === 'limit') {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
-        <div style={{ maxWidth: '420px' }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '36px', letterSpacing: '-0.03em', color: '#2D2D2D', marginBottom: '8px' }}>
-            gen<span style={{ color: '#C4784A' }}>U</span>ine
-          </div>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.1)', border: '1.5px solid rgba(196, 120, 74, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '24px auto' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4784A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 700, color: '#2D2D2D', marginBottom: '12px', letterSpacing: '-0.02em' }}>
-            that&apos;s your lot for today
-          </h2>
-          <p style={{ fontSize: '15px', color: '#6B5E52', lineHeight: 1.7, marginBottom: '8px' }}>
-            you&apos;ve used your {FREE_LIMIT} free messages. come back tomorrow or go pro for unlimited.
-          </p>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '28px', flexWrap: 'wrap' }}>
-            <Link href="/pricing">
-              <button className="btn-primary" style={{ padding: '12px 28px', borderRadius: '12px', fontSize: '15px' }}>
-                go pro — unlimited →
-              </button>
-            </Link>
-            <button
-              onClick={() => setPhase('generator')}
-              className="btn-ghost"
-              style={{ padding: '12px 24px', borderRadius: '12px', fontSize: '15px' }}
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--ink-whisper)' }}>
+          <MiniLogo />
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+            style={{ maxWidth: 460 }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                border: '1px solid var(--ink-whisper)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 28px',
+              }}
             >
-              come back tomorrow
-            </button>
-          </div>
-          <p style={{ fontSize: '12px', color: '#A08C7C', marginTop: '20px' }}>your voice profile is saved. pick up where you left off tomorrow.</p>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--terra)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 5vw, 48px)',
+                fontWeight: 600,
+                color: 'var(--ink)',
+                marginBottom: 14,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.05,
+              }}
+            >
+              that&apos;s your lot for today.
+            </h2>
+            <p className="serif-italic" style={{ fontSize: 18, color: 'var(--ink-mid)', lineHeight: 1.5, marginBottom: 32 }}>
+              you&apos;ve used your {FREE_LIMIT} free messages. come back tomorrow or go pro for unlimited.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
+              <Link href="/pricing" style={{ textDecoration: 'none' }}>
+                <button className="btn-primary" style={{ padding: '14px 28px', borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-jakarta)' }}>
+                  go pro — unlimited →
+                </button>
+              </Link>
+              <button
+                onClick={() => setPhase('generator')}
+                className="btn-ghost"
+                style={{ padding: '14px 24px', borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-jakarta)' }}
+              >
+                come back tomorrow
+              </button>
+            </div>
+            <p className="mono" style={{ fontSize: 11, color: 'var(--ink-light)', letterSpacing: '0.04em' }}>
+              your voice profile is saved · pick up tomorrow
+            </p>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  // ── Render: Voice Setup ──
-
+  // ── Voice setup ──
   if (phase === 'voice-setup') {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', flexDirection: 'column' }}>
-        {/* Mini header */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(196, 120, 74, 0.08)' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '20px', color: '#2D2D2D', letterSpacing: '-0.02em' }}>
-              gen<span style={{ color: '#C4784A' }}>U</span>ine
-            </span>
-          </Link>
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--ink-whisper)' }}>
+          <MiniLogo />
         </div>
-
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
           <VoiceCapture
             userName={userName}
@@ -590,234 +734,335 @@ export default function AppPage() {
     );
   }
 
-  // ── Render: Voice Confirmation ──
-
+  // ── Voice confirm ──
   if (phase === 'voice-confirm' && pendingVoiceProfile) {
     const vp = pendingVoiceProfile;
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(196, 120, 74, 0.08)' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '20px', color: '#2D2D2D', letterSpacing: '-0.02em' }}>
-              gen<span style={{ color: '#C4784A' }}>U</span>ine
-            </span>
-          </Link>
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--ink-whisper)' }}>
+          <MiniLogo />
         </div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-          <div className="fade-scale" style={{ width: '100%', maxWidth: '520px' }}>
-            <p style={{ fontSize: '13px', color: '#C4784A', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              voice analysis complete
+          <motion.div
+            initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+            style={{ width: '100%', maxWidth: 560 }}
+          >
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — voice analysis complete
             </p>
-            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 700, color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '8px' }}>
-              here&apos;s what genUine learned about your voice
+            <h2
+              style={{
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(28px, 4vw, 40px)',
+                fontWeight: 600,
+                color: 'var(--ink)',
+                letterSpacing: '-0.03em',
+                marginBottom: 12,
+                lineHeight: 1.1,
+              }}
+            >
+              here&apos;s what genUine learned about your voice.
             </h2>
-            <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '28px', lineHeight: 1.6 }}>
+            <p className="serif-italic" style={{ fontSize: 17, color: 'var(--ink-mid)', marginBottom: 32, lineHeight: 1.5 }}>
               does this sound right? if not, you can go back and adjust.
             </p>
 
-            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '24px', border: '1.5px solid rgba(196, 120, 74, 0.15)', boxShadow: '0 4px 24px rgba(196, 120, 74, 0.08)', marginBottom: '24px' }}>
+            <div className="warm-card" style={{ padding: 4, marginBottom: 28 }}>
               {[
                 { label: 'tone', value: vp.tone },
                 { label: 'energy', value: vp.energy },
                 { label: 'style', value: vp.style || vp.overallStyle },
                 { label: 'pattern', value: vp.pattern },
-              ].filter(row => row.value).map((row) => (
-                <div
-                  key={row.label}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: '12px',
-                    padding: '12px 0',
-                    borderBottom: '1px solid rgba(196, 120, 74, 0.06)',
-                  }}
-                >
-                  <span style={{
-                    fontSize: '11px', fontWeight: 700, color: '#C4784A',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    letterSpacing: '0.08em', textTransform: 'uppercase',
-                    minWidth: '64px', paddingTop: '2px',
-                  }}>
-                    {row.label}
-                  </span>
-                  <span style={{ fontSize: '14px', color: '#2D2D2D', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5 }}>
-                    {String(row.value)}
-                  </span>
-                </div>
-              ))}
+              ]
+                .filter((row) => row.value)
+                .map((row, i, arr) => (
+                  <div
+                    key={row.label}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 20,
+                      padding: '18px 24px',
+                      borderBottom: i === arr.length - 1 ? 'none' : '1px solid var(--ink-whisper)',
+                    }}
+                  >
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--terra)',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        minWidth: 70,
+                        paddingTop: 3,
+                      }}
+                    >
+                      {row.label}
+                    </span>
+                    <span style={{ fontSize: 15, color: 'var(--ink)', fontFamily: 'var(--font-dm)', lineHeight: 1.5 }}>
+                      {String(row.value)}
+                    </span>
+                  </div>
+                ))}
             </div>
 
-            <p style={{ fontSize: '13px', color: '#A08C7C', marginBottom: '20px', fontStyle: 'italic' }}>
-              looks right?
-            </p>
-
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <button
                 onClick={handleVoiceConfirm}
                 className="btn-primary"
-                style={{ flex: 1, padding: '14px', borderRadius: '14px', fontSize: '15px' }}
+                style={{ flex: 1, minWidth: 200, padding: 16, borderRadius: 999, fontSize: 15, fontFamily: 'var(--font-jakarta)' }}
               >
                 yes, let&apos;s go →
               </button>
               <button
                 onClick={handleVoiceAdjust}
                 className="btn-ghost"
-                style={{ padding: '14px 20px', borderRadius: '14px', fontSize: '15px' }}
+                style={{ padding: '16px 22px', borderRadius: 999, fontSize: 15, fontFamily: 'var(--font-jakarta)' }}
               >
                 let me adjust
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  // ── Render: Generator + Results ──
-
+  // ── Generator + Results ──
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FAF9F7' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(196, 120, 74, 0.08)', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '20px', color: '#2D2D2D', letterSpacing: '-0.02em' }}>
-            gen<span style={{ color: '#C4784A' }}>U</span>ine
-          </span>
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--paper)' }}>
+      {/* Top bar */}
+      <div
+        style={{
+          padding: '14px 24px',
+          borderBottom: '1px solid var(--ink-whisper)',
+          backgroundColor: 'var(--paper)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          backdropFilter: 'saturate(140%) blur(8px)',
+        }}
+      >
+        <MiniLogo />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {isAdmin && (
-            <span title="admin mode — unlimited messages" style={{ fontSize: '14px', color: '#C4784A', opacity: 0.7, fontFamily: "'DM Sans', sans-serif" }}>∞</span>
+            <span
+              title="admin mode — unlimited"
+              className="mono"
+              style={{ fontSize: 14, color: 'var(--terra)', opacity: 0.7 }}
+            >
+              ∞
+            </span>
           )}
           {!isPro && !isAdmin && (
-            <span style={{ fontSize: '12px', color: messagesRemaining <= 1 ? '#C4784A' : '#A08C7C', fontFamily: "'DM Sans', sans-serif" }}>
+            <span
+              className="mono"
+              style={{
+                fontSize: 11,
+                color: messagesRemaining <= 1 ? 'var(--terra)' : 'var(--ink-light)',
+                letterSpacing: '0.04em',
+              }}
+            >
               {messagesRemaining} message{messagesRemaining !== 1 ? 's' : ''} left today
             </span>
           )}
           {isPro && !isAdmin && (
-            <span style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <span
+              className="mono"
+              style={{ fontSize: 11, color: 'var(--terra)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+            >
               pro ✓
             </span>
           )}
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(196, 120, 74, 0.08)', border: '1px solid rgba(196, 120, 74, 0.15)', borderRadius: '100px', padding: '5px 12px', cursor: 'pointer' }}
+          <button
             onClick={handleClearVoice}
             title="reset voice"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 12px',
+              borderRadius: 999,
+              border: '1px solid var(--ink-whisper)',
+              backgroundColor: 'var(--paper-warm)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--ink-mid)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              transition: 'border-color 220ms ease',
+            }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#C4784A', display: 'inline-block' }} />
-            <span style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              your voice saved ✓
-            </span>
-          </div>
+            <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block' }} />
+            voice saved
+          </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 24px 80px' }}>
-
+      <div style={{ maxWidth: 780, margin: '0 auto', padding: '60px 24px 120px' }}>
         {/* Results phase */}
-        {phase === 'results' && result && (
-          <ResultCards result={result} onTryAgain={handleTryAgain} />
-        )}
+        {phase === 'results' && result && <ResultCards result={result} onTryAgain={handleTryAgain} />}
 
         {/* Generator phase */}
         {phase === 'generator' && (
-          <div className="fade-scale">
-            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 700, color: '#2D2D2D', letterSpacing: '-0.02em', marginBottom: '6px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — compose
+            </p>
+            <h2
+              style={{
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 4.5vw, 48px)',
+                fontWeight: 600,
+                color: 'var(--ink)',
+                letterSpacing: '-0.03em',
+                marginBottom: 10,
+                lineHeight: 1.05,
+              }}
+            >
               who do you want to message?
             </h2>
-            <p style={{ fontSize: '14px', color: '#A08C7C', marginBottom: '32px', lineHeight: 1.6 }}>
+            <p className="serif-italic" style={{ fontSize: 18, color: 'var(--ink-mid)', marginBottom: 40, lineHeight: 1.5 }}>
               drop their linkedin link and we&apos;ll do the rest.
             </p>
 
-            {/* URL input card */}
-            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '28px', border: '1px solid rgba(196, 120, 74, 0.12)', boxShadow: '0 4px 24px rgba(196, 120, 74, 0.06)', marginBottom: '20px' }}>
-              <label style={labelStyle}>linkedin profile url</label>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: fetchError ? '10px' : '0' }}>
+            {/* URL fetch card */}
+            <div className="warm-card" style={{ padding: 28, marginBottom: 20 }}>
+              <label style={labelStyle}>— linkedin profile url</label>
+              <div style={{ display: 'flex', gap: 10, marginBottom: fetchError ? 10 : 0, flexWrap: 'wrap' }}>
                 <input
                   type="text"
                   value={linkedinUrl}
-                  onChange={(e) => { setLinkedinUrl(e.target.value); setFetchedPreview(null); setFetchError(''); setRawProfile(''); }}
+                  onChange={(e) => {
+                    setLinkedinUrl(e.target.value);
+                    setFetchedPreview(null);
+                    setFetchError('');
+                    setRawProfile('');
+                  }}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleFetchProfile(); }}
                   placeholder="linkedin.com/in/username"
-                  style={{ ...fieldStyle, flex: 1, resize: undefined }}
-                  onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
+                  style={{ ...fieldStyle, flex: 1, minWidth: 220 }}
+                  onFocus={(e) => { e.target.style.borderColor = 'var(--ink)'; e.target.style.boxShadow = '0 0 0 3px rgba(26,23,20,0.05)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'var(--ink-whisper)'; e.target.style.boxShadow = 'none'; }}
                 />
                 <button
                   onClick={handleFetchProfile}
                   disabled={isFetching || !linkedinUrl.trim()}
                   className="btn-primary"
                   style={{
-                    padding: '0 20px', borderRadius: '12px', fontSize: '14px', whiteSpace: 'nowrap',
-                    opacity: isFetching || !linkedinUrl.trim() ? 0.5 : 1,
+                    padding: '0 22px',
+                    borderRadius: 12,
+                    fontSize: 14,
+                    whiteSpace: 'nowrap',
+                    opacity: isFetching || !linkedinUrl.trim() ? 0.4 : 1,
                     cursor: isFetching || !linkedinUrl.trim() ? 'not-allowed' : 'pointer',
-                    flexShrink: 0,
+                    minHeight: 48,
+                    fontFamily: 'var(--font-jakarta)',
                   }}
                 >
                   {isFetching ? (
-                    <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                      <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                    </span>
-                  ) : 'fetch →'}
+                    <LoadingIndicator small />
+                  ) : (
+                    'fetch →'
+                  )}
                 </button>
               </div>
 
-              {/* Fetch error */}
               {fetchError && (
-                <p style={{ fontSize: '13px', color: '#C4784A', marginTop: '8px' }}>{fetchError}</p>
+                <p style={{ fontSize: 13, color: 'var(--terra)', marginTop: 10, fontFamily: 'var(--font-dm)' }}>
+                  {fetchError}
+                </p>
               )}
 
-              {/* Fetched profile preview */}
               {fetchedPreview && (
-                <div
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
                   style={{
-                    marginTop: '16px', padding: '16px', borderRadius: '14px',
-                    backgroundColor: 'rgba(196, 120, 74, 0.05)',
-                    border: '1px solid rgba(196, 120, 74, 0.15)',
+                    marginTop: 16,
+                    padding: 18,
+                    borderRadius: 14,
+                    backgroundColor: 'var(--paper)',
+                    border: '1px solid var(--ink-whisper)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: fetchedPreview.about ? '10px' : '0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: fetchedPreview.about ? 12 : 0 }}>
                     {fetchedPreview.profilePicUrl ? (
                       <img
                         src={fetchedPreview.profilePicUrl}
                         alt={fetchedPreview.name}
-                        style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                        style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--ink-whisper)' }}
                       />
                     ) : (
-                      <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '18px', color: '#C4784A' }}>
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--terra-tint)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span style={{ fontFamily: 'var(--font-jakarta)', fontWeight: 700, fontSize: 18, color: 'var(--terra)' }}>
                           {fetchedPreview.name?.[0] || '?'}
                         </span>
                       </div>
                     )}
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#2D2D2D', marginBottom: '2px' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontFamily: 'var(--font-jakarta)', fontWeight: 600, fontSize: 15, color: 'var(--ink)', marginBottom: 3, letterSpacing: '-0.01em' }}>
                         {fetchedPreview.name}
                       </p>
-                      <p style={{ fontSize: '13px', color: '#6B5E52', lineHeight: 1.4 }}>
+                      <p style={{ fontSize: 13, color: 'var(--ink-mid)', lineHeight: 1.4 }}>
                         {fetchedPreview.headline}
                       </p>
                       {fetchedPreview.location && (
-                        <p style={{ fontSize: '11px', color: '#A08C7C', marginTop: '2px' }}>{fetchedPreview.location}</p>
+                        <p className="mono" style={{ fontSize: 10, color: 'var(--ink-light)', marginTop: 4, letterSpacing: '0.04em' }}>
+                          {fetchedPreview.location}
+                        </p>
                       )}
                     </div>
-                    <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                      <span style={{ fontSize: '12px', color: '#C4784A', fontWeight: 600, backgroundColor: 'rgba(196, 120, 74, 0.1)', padding: '3px 10px', borderRadius: '100px' }}>
-                        ✓ got it
-                      </span>
-                    </div>
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--terra)',
+                        border: '1px solid rgba(196,120,74,0.3)',
+                        backgroundColor: 'var(--terra-tint)',
+                        padding: '4px 10px',
+                        borderRadius: 999,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        flexShrink: 0,
+                      }}
+                    >
+                      got it
+                    </span>
                   </div>
                   {fetchedPreview.about && (
-                    <p style={{ fontSize: '12px', color: '#A08C7C', lineHeight: 1.6, marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(196, 120, 74, 0.1)' }}>
+                    <p style={{ fontSize: 13, color: 'var(--ink-mid)', lineHeight: 1.6, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--ink-whisper)' }}>
                       {fetchedPreview.about}
                     </p>
                   )}
-                </div>
+                </motion.div>
               )}
 
-              {/* Fallback: paste manually */}
               {(fetchError || (!fetchedPreview && !isFetching)) && (
-                <div style={{ marginTop: fetchError ? '16px' : '20px', paddingTop: '16px', borderTop: '1px solid rgba(196, 120, 74, 0.08)' }}>
-                  <p style={{ fontSize: '12px', color: '#A08C7C', marginBottom: '10px' }}>
+                <div style={{ marginTop: fetchError ? 16 : 20, paddingTop: 16, borderTop: '1px solid var(--ink-whisper)' }}>
+                  <p className="serif-italic" style={{ fontSize: 13, color: 'var(--ink-light)', marginBottom: 10 }}>
                     {fetchError ? 'or paste their info manually:' : 'no url? paste their info instead:'}
                   </p>
                   <textarea
@@ -825,79 +1070,114 @@ export default function AppPage() {
                     onChange={(e) => setRawProfile(e.target.value)}
                     placeholder={"Sarah Chen\nProduct Manager @ Stripe\n\nAbout: I've spent the last 5 years building..."}
                     rows={5}
-                    style={{ ...fieldStyle, resize: 'vertical', minHeight: '100px' }}
-                    onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
+                    style={{ ...fieldStyle, resize: 'vertical', minHeight: 110, fontFamily: 'var(--font-dm)' }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--ink)'; e.target.style.boxShadow = '0 0 0 3px rgba(26,23,20,0.05)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--ink-whisper)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               )}
             </div>
 
-            {/* Options row */}
-            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px 24px', border: '1px solid rgba(196, 120, 74, 0.1)', boxShadow: '0 2px 12px rgba(196, 120, 74, 0.04)', marginBottom: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-
-                {/* Recipient type */}
+            {/* Options card */}
+            <div className="warm-card" style={{ padding: 28, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
                 <div>
-                  <label style={labelStyle}>who are you reaching out to?</label>
+                  <label style={labelStyle}>— who are you reaching out to?</label>
                   <select
                     value={recipientType}
                     onChange={(e) => setRecipientType(e.target.value)}
                     style={{
-                      ...fieldStyle, resize: undefined,
-                      cursor: 'pointer', appearance: 'none',
+                      ...fieldStyle,
+                      cursor: 'pointer',
+                      appearance: 'none',
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A08C7C' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
-                      paddingRight: '32px',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 14px center',
+                      paddingRight: 36,
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={(e) => { e.target.style.borderColor = 'var(--ink)'; e.target.style.boxShadow = '0 0 0 3px rgba(26,23,20,0.05)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--ink-whisper)'; e.target.style.boxShadow = 'none'; }}
                   >
-                    <option value="">pick one...</option>
+                    <option value="">pick one…</option>
                     {RECIPIENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
 
-                {/* Tone */}
                 <div>
-                  <label style={labelStyle}>tone</label>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingTop: '2px' }}>
-                    {TONES.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setTone(tone === t ? '' : t)}
-                        style={{
-                          padding: '7px 16px', borderRadius: '100px', fontSize: '13px',
-                          fontFamily: "'DM Sans', sans-serif",
-                          backgroundColor: tone === t ? '#C4784A' : 'transparent',
-                          color: tone === t ? '#FFFFFF' : '#6B5E52',
-                          border: `1.5px solid ${tone === t ? '#C4784A' : '#E8DDD5'}`,
-                          cursor: 'pointer', transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {t}
-                      </button>
-                    ))}
+                  <label style={labelStyle}>— tone</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 4 }}>
+                    {TONES.map((t) => {
+                      const active = tone === t;
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => setTone(active ? '' : t)}
+                          style={{
+                            padding: '9px 18px',
+                            borderRadius: 999,
+                            fontSize: 13,
+                            fontFamily: 'var(--font-jakarta)',
+                            backgroundColor: active ? 'var(--ink)' : 'transparent',
+                            color: active ? 'var(--paper)' : 'var(--ink-mid)',
+                            border: `1px solid ${active ? 'var(--ink)' : 'var(--ink-whisper)'}`,
+                            cursor: 'pointer',
+                            transition: 'background-color 220ms ease, color 220ms ease, border-color 220ms ease, transform 160ms var(--ease-out)',
+                            letterSpacing: '-0.01em',
+                          }}
+                          onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.97)'; }}
+                          onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
-              {/* Additional context */}
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(196, 120, 74, 0.08)' }}>
-                <label style={labelStyle}>extra context <span style={{ color: '#A08C7C', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>optional — anything else genUine should know</span></label>
+              <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid var(--ink-whisper)' }}>
+                <label style={labelStyle}>
+                  — extra context{' '}
+                  <span
+                    style={{
+                      color: 'var(--ink-light)',
+                      textTransform: 'none',
+                      letterSpacing: 0,
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-serif)',
+                      fontStyle: 'italic',
+                      fontSize: 12,
+                    }}
+                  >
+                    optional — anything else genUine should know
+                  </span>
+                </label>
                 <input
-                  type="text" value={additionalContext}
+                  type="text"
+                  value={additionalContext}
                   onChange={(e) => setAdditionalContext(e.target.value)}
-                  placeholder="e.g. I want to ask about internship opportunities, or we met at a conference last month"
-                  style={{ ...fieldStyle, resize: undefined }}
-                  onFocus={(e) => { e.target.style.borderColor = '#C4784A'; e.target.style.boxShadow = '0 0 0 3px rgba(196, 120, 74, 0.12)'; }}
-                  onBlur={(e) => { e.target.style.borderColor = '#E8DDD5'; e.target.style.boxShadow = 'none'; }}
+                  placeholder="e.g. I want to ask about internship opportunities"
+                  style={fieldStyle}
+                  onFocus={(e) => { e.target.style.borderColor = 'var(--ink)'; e.target.style.boxShadow = '0 0 0 3px rgba(26,23,20,0.05)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'var(--ink-whisper)'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
             </div>
 
             {error && (
-              <p style={{ fontSize: '13px', color: '#C4784A', marginBottom: '16px', padding: '10px 14px', backgroundColor: 'rgba(196, 120, 74, 0.08)', borderRadius: '10px' }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: 'var(--terra)',
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  backgroundColor: 'var(--terra-tint)',
+                  border: '1px solid rgba(196,120,74,0.2)',
+                  borderRadius: 12,
+                  fontFamily: 'var(--font-dm)',
+                }}
+              >
                 {error}
               </p>
             )}
@@ -907,33 +1187,46 @@ export default function AppPage() {
               disabled={isGenerating || !rawProfile.trim()}
               className="btn-primary"
               style={{
-                width: '100%', padding: '16px', borderRadius: '14px', fontSize: '16px',
-                opacity: isGenerating || !rawProfile.trim() ? 0.5 : 1,
+                width: '100%',
+                padding: 18,
+                borderRadius: 999,
+                fontSize: 15,
+                fontFamily: 'var(--font-jakarta)',
+                opacity: isGenerating || !rawProfile.trim() ? 0.4 : 1,
                 cursor: isGenerating || !rawProfile.trim() ? 'not-allowed' : 'pointer',
+                letterSpacing: '-0.01em',
               }}
             >
               {isGenerating ? (
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                  <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                  <span className="loading-dot" style={{ width: 5, height: 5 }} />
-                </span>
-              ) : 'write my message →'}
+                <LoadingIndicator small />
+              ) : (
+                <>write my message <span style={{ marginLeft: 4 }}>→</span></>
+              )}
             </button>
 
-            <p style={{ fontSize: '12px', color: '#A08C7C', textAlign: 'center', marginTop: '12px' }}>
-              {isAdmin ? '∞ messages · admin' : isPro ? 'unlimited messages · pro' : `${messagesRemaining} of ${FREE_LIMIT} free messages left today`}
+            <p className="mono" style={{ fontSize: 11, color: 'var(--ink-light)', textAlign: 'center', marginTop: 16, letterSpacing: '0.04em' }}>
+              {isAdmin
+                ? '∞ messages · admin'
+                : isPro
+                ? 'unlimited · pro'
+                : `${messagesRemaining} of ${FREE_LIMIT} free messages left today`}
               {!isPro && !isAdmin && messagesRemaining <= 1 && (
-                <Link href="/pricing" style={{ color: '#C4784A', textDecoration: 'none', marginLeft: '6px', fontWeight: 600 }}>
+                <Link
+                  href="/pricing"
+                  style={{
+                    color: 'var(--terra)',
+                    textDecoration: 'none',
+                    marginLeft: 8,
+                    fontWeight: 600,
+                    letterSpacing: '0.02em',
+                  }}
+                >
                   go pro →
                 </Link>
               )}
             </p>
-          </div>
+          </motion.div>
         )}
-
-        {/* Generating overlay */}
-        {isGenerating && phase === 'generator' && <LoadingSpinner />}
       </div>
     </div>
   );

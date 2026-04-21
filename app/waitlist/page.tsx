@@ -1,16 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import WaitlistForm from '../components/WaitlistForm';
 import WaitlistCounter from '../components/WaitlistCounter';
 import ScrollReveal from '../components/ScrollReveal';
+import AnimatedHeading from '../components/AnimatedHeading';
+import Magnetic from '../components/Magnetic';
+import ScrollProgress from '../components/ScrollProgress';
 
 const QUOTES = [
-  { quote: 'kinda shocked that it turned out that well', name: 'early user', role: '' },
-  { quote: 'the replies felt quite natural', name: 'early user', role: '' },
-  { quote: 'it lowk copied my tone', name: 'early user', role: '' },
+  { quote: 'kinda shocked that it turned out that well', name: 'early user' },
+  { quote: 'the replies felt quite natural', name: 'early user' },
+  { quote: 'it lowk copied my tone', name: 'early user' },
 ];
 
 const FAQS = [
@@ -36,15 +40,33 @@ const FAQS = [
   },
 ];
 
+const PERKS = [
+  {
+    no: '01',
+    title: 'skip the line',
+    desc: 'waitlist members get access before everyone else.',
+  },
+  {
+    no: '02',
+    title: 'launch discount',
+    desc: 'early joiners get a special deal on Pro — locked in at signup.',
+  },
+  {
+    no: '03',
+    title: 'shape the product',
+    desc: "we'll actually reach out and ask what you need. your feedback matters.",
+  },
+];
+
 export default function WaitlistPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <div style={{ backgroundColor: '#FAF9F7', color: '#2D2D2D', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--paper)', color: 'var(--ink)', minHeight: '100vh' }}>
+      <ScrollProgress />
+      <SiteHeader activePage="waitlist" />
 
-      <SiteHeader />
-
-      {/* ── HERO ── */}
+      {/* HERO */}
       <section
         style={{
           minHeight: '100vh',
@@ -52,133 +74,185 @@ export default function WaitlistPage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '100px 24px 80px',
+          padding: '120px 24px 80px',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Background glow */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(242, 169, 34, 0.09) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 80% 70%, rgba(196, 120, 74, 0.07) 0%, transparent 60%)',
-        }} />
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'radial-gradient(900px 460px at 50% 20%, rgba(196,120,74,0.10), transparent 60%)',
+          }}
+        />
 
-        <div style={{ position: 'relative', maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Badge */}
-          <div
-            className="fade-up stagger-1"
+        <div style={{ position: 'relative', maxWidth: 620, margin: '0 auto', textAlign: 'center' }}>
+          <ScrollReveal>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '6px 14px',
+                borderRadius: 999,
+                border: '1px solid var(--ink-whisper)',
+                backgroundColor: 'var(--paper-warm)',
+                marginBottom: 24,
+              }}
+            >
+              <span
+                className="pulse-dot"
+                style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block' }}
+              />
+              <span
+                className="mono"
+                style={{ fontSize: 11, color: 'var(--ink-mid)', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+              >
+                early access · limited spots
+              </span>
+            </div>
+          </ScrollReveal>
+
+          <AnimatedHeading
+            as="h1"
+            text="be first in line."
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              backgroundColor: 'rgba(196, 120, 74, 0.1)',
-              border: '1px solid rgba(196, 120, 74, 0.2)',
-              borderRadius: '100px', padding: '5px 14px',
-              marginBottom: '20px',
+              fontFamily: 'var(--font-jakarta)',
+              fontSize: 'clamp(54px, 9vw, 104px)',
+              fontWeight: 700,
+              letterSpacing: '-0.04em',
+              lineHeight: 0.95,
+              color: 'var(--ink)',
+              marginBottom: 24,
             }}
-          >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#C4784A', display: 'inline-block' }} />
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '0.02em' }}>
-              early access — limited spots
-            </span>
-          </div>
+          />
 
-          <h1
-            className="fade-up stagger-2"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 800,
-              fontSize: 'clamp(36px, 7vw, 60px)',
-              letterSpacing: '-0.03em',
-              color: '#2D2D2D',
-              lineHeight: 1.1,
-              marginBottom: '20px',
-            }}
-          >
-            be first in line.
-          </h1>
+          <ScrollReveal delay={200}>
+            <p
+              className="serif-italic"
+              style={{
+                fontSize: 'clamp(18px, 2.2vw, 22px)',
+                color: 'var(--ink-mid)',
+                lineHeight: 1.5,
+                maxWidth: 480,
+                margin: '0 auto 36px',
+              }}
+            >
+              genUine is launching soon. join the waitlist and get early access — plus a special
+              discount for being here early.
+            </p>
+          </ScrollReveal>
 
-          <p
-            className="fade-up stagger-3"
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 'clamp(16px, 2.5vw, 18px)',
-              color: '#6B5E52',
-              lineHeight: 1.7,
-              marginBottom: '40px',
-              maxWidth: '440px',
-              margin: '0 auto 40px',
-            }}
-          >
-            genUine is launching soon. join the waitlist and get early access — plus a special discount for being here early.
-          </p>
+          <ScrollReveal delay={260}>
+            <div style={{ marginBottom: 32 }}>
+              <WaitlistCounter />
+            </div>
+          </ScrollReveal>
 
-          {/* Counter */}
-          <div className="fade-up stagger-4" style={{ marginBottom: '32px' }}>
-            <WaitlistCounter />
-          </div>
-
-          {/* Form card */}
-          <div
-            className="fade-up"
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid rgba(196, 120, 74, 0.12)',
-              borderRadius: '24px',
-              padding: 'clamp(28px, 5vw, 48px)',
-              boxShadow: '0 8px 48px rgba(196, 120, 74, 0.1)',
-              animationDelay: '320ms',
-            }}
-          >
-            <WaitlistForm />
-          </div>
+          <ScrollReveal delay={320}>
+            <div
+              className="warm-card"
+              style={{
+                padding: 'clamp(28px, 5vw, 44px)',
+                textAlign: 'left',
+              }}
+            >
+              <WaitlistForm />
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FFFFFF' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              what early users said
+      {/* SOCIAL PROOF */}
+      <section style={{ padding: 'clamp(80px, 12vw, 120px) 24px', backgroundColor: 'var(--paper-warm)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal style={{ marginBottom: 56 }}>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — what early users said
             </p>
             <h2
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 4vw, 36px)',
-                fontWeight: 700, letterSpacing: '-0.02em',
-                color: '#2D2D2D',
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 5vw, 56px)',
+                fontWeight: 600,
+                letterSpacing: '-0.03em',
+                color: 'var(--ink)',
+                lineHeight: 1.05,
+                maxWidth: 680,
               }}
             >
-              people were genuinely surprised.
+              people were{' '}
+              <span className="serif-italic" style={{ color: 'var(--terra)' }}>
+                genuinely
+              </span>{' '}
+              surprised.
             </h2>
           </ScrollReveal>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 20,
+            }}
+          >
             {QUOTES.map((q, i) => (
-              <ScrollReveal key={q.name} delay={i * 100}>
+              <ScrollReveal key={i} delay={i * 100}>
                 <div
                   style={{
-                    backgroundColor: '#FAF9F7',
-                    border: '1px solid rgba(196, 120, 74, 0.12)',
-                    borderRadius: '18px',
-                    padding: '24px',
+                    backgroundColor: 'var(--paper)',
+                    border: '1px solid var(--ink-whisper)',
+                    borderRadius: 20,
+                    padding: '32px 28px',
                     height: '100%',
+                    position: 'relative',
                   }}
                 >
-                  <p style={{ fontSize: '18px', color: '#C4784A', marginBottom: '12px', lineHeight: 1 }}>❝</p>
                   <p
+                    className="serif-italic"
                     style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '16px', fontWeight: 600,
-                      color: '#2D2D2D', lineHeight: 1.5, marginBottom: '16px',
+                      fontSize: 22,
+                      color: 'var(--ink)',
+                      lineHeight: 1.4,
+                      marginBottom: 24,
                     }}
                   >
-                    {q.quote}
+                    &ldquo;{q.quote}&rdquo;
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: 'rgba(196, 120, 74, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#C4784A' }}>{q.name[0]}</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      paddingTop: 20,
+                      borderTop: '1px solid var(--ink-whisper)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--terra-tint)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <span
+                        className="mono"
+                        style={{ fontSize: 11, fontWeight: 600, color: 'var(--terra)' }}
+                      >
+                        {q.name[0].toUpperCase()}
+                      </span>
                     </div>
-                    <span style={{ fontSize: '13px', color: '#A08C7C', fontWeight: 500 }}>{q.name} · {q.role}</span>
+                    <span className="mono" style={{ fontSize: 12, color: 'var(--ink-light)', letterSpacing: '0.04em' }}>
+                      {q.name}
+                    </span>
                   </div>
                 </div>
               </ScrollReveal>
@@ -187,94 +261,139 @@ export default function WaitlistPage() {
         </div>
       </section>
 
-      {/* ── WHY WAITLIST ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FAF9F7' }}>
-        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '20px' }}>
-              why join early
+      {/* PERKS */}
+      <section style={{ padding: 'clamp(80px, 12vw, 120px) 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <ScrollReveal style={{ marginBottom: 56 }}>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
+              — why join early
             </p>
             <h2
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 4vw, 36px)',
-                fontWeight: 700, letterSpacing: '-0.02em',
-                color: '#2D2D2D', marginBottom: '40px',
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 5vw, 56px)',
+                fontWeight: 600,
+                letterSpacing: '-0.03em',
+                color: 'var(--ink)',
+                lineHeight: 1.05,
               }}
             >
-              early access comes with perks.
+              early access comes with <span className="serif-italic">perks</span>.
             </h2>
+          </ScrollReveal>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { icon: '⚡', title: 'skip the line', desc: 'waitlist members get access before everyone else.' },
-                { icon: '🎁', title: 'launch discount', desc: 'early joiners get a special deal on Pro — locked in at signup.' },
-                { icon: '🔧', title: 'shape the product', desc: "we'll actually reach out and ask what you need. your feedback matters." },
-              ].map((perk) => (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {PERKS.map((perk, i) => (
+              <ScrollReveal key={perk.title} delay={i * 80}>
                 <div
-                  key={perk.title}
+                  className="warm-card"
                   style={{
+                    padding: 32,
+                    height: '100%',
                     display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '16px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid rgba(196, 120, 74, 0.1)',
-                    borderRadius: '16px',
-                    padding: '20px 24px',
-                    textAlign: 'left',
+                    flexDirection: 'column',
+                    gap: 24,
                   }}
                 >
-                  <span style={{ fontSize: '24px', flexShrink: 0 }}>{perk.icon}</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <span
+                      className="mono"
+                      style={{ fontSize: 12, color: 'var(--ink-light)', letterSpacing: '0.1em' }}
+                    >
+                      {perk.no}
+                    </span>
+                    <div
+                      aria-hidden
+                      style={{
+                        width: 28,
+                        height: 1,
+                        backgroundColor: 'var(--terra)',
+                        marginTop: 8,
+                      }}
+                    />
+                  </div>
                   <div>
-                    <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '15px', color: '#2D2D2D', marginBottom: '4px' }}>{perk.title}</p>
-                    <p style={{ fontSize: '14px', color: '#6B5E52', lineHeight: 1.6 }}>{perk.desc}</p>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-jakarta)',
+                        fontWeight: 600,
+                        fontSize: 22,
+                        color: 'var(--ink)',
+                        letterSpacing: '-0.02em',
+                        marginBottom: 8,
+                      }}
+                    >
+                      {perk.title}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 15,
+                        color: 'var(--ink-mid)',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {perk.desc}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </ScrollReveal>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── FAQ ── */}
-      <section style={{ padding: 'clamp(60px, 10vw, 100px) 24px', backgroundColor: '#FFFFFF' }}>
-        <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-          <ScrollReveal style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#C4784A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              faq
+      {/* FAQ */}
+      <section style={{ padding: 'clamp(80px, 12vw, 120px) 24px', backgroundColor: 'var(--paper-warm)' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          <ScrollReveal style={{ marginBottom: 48, textAlign: 'center' }}>
+            <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 12 }}>
+              — faq
             </p>
             <h2
               style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 4vw, 34px)',
-                fontWeight: 700, letterSpacing: '-0.02em',
-                color: '#2D2D2D',
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(32px, 5vw, 52px)',
+                fontWeight: 600,
+                letterSpacing: '-0.03em',
+                color: 'var(--ink)',
+                lineHeight: 1.05,
               }}
             >
-              questions? answered.
+              questions? <span className="serif-italic">answered.</span>
             </h2>
           </ScrollReveal>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {FAQS.map((faq, i) => (
-              <ScrollReveal key={i} delay={i * 60}>
+          <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--ink-whisper)' }}>
+            {FAQS.map((faq, i) => {
+              const open = openFaq === i;
+              return (
                 <div
+                  key={i}
                   style={{
-                    backgroundColor: '#FAF9F7',
-                    border: '1px solid rgba(196, 120, 74, 0.12)',
-                    borderRadius: '14px',
-                    overflow: 'hidden',
+                    borderBottom: '1px solid var(--ink-whisper)',
                   }}
                 >
                   <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    onClick={() => setOpenFaq(open ? null : i)}
                     style={{
                       width: '100%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '16px',
-                      padding: '18px 20px',
+                      gap: 16,
+                      padding: '24px 4px',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
@@ -283,78 +402,136 @@ export default function WaitlistPage() {
                   >
                     <span
                       style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        fontWeight: 600, fontSize: '15px',
-                        color: '#2D2D2D',
+                        fontFamily: 'var(--font-jakarta)',
+                        fontWeight: 500,
+                        fontSize: 'clamp(18px, 2.4vw, 22px)',
+                        color: 'var(--ink)',
+                        letterSpacing: '-0.015em',
                       }}
                     >
                       {faq.q}
                     </span>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#C4784A"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <span
+                      aria-hidden
                       style={{
                         flexShrink: 0,
-                        transition: 'transform 0.2s ease',
-                        transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)',
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: '1px solid var(--ink-whisper)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 280ms var(--ease-out), background-color 220ms ease',
+                        transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+                        backgroundColor: open ? 'var(--ink)' : 'transparent',
+                        color: open ? 'var(--paper)' : 'var(--ink-mid)',
+                        fontSize: 18,
+                        lineHeight: 1,
                       }}
                     >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
+                      +
+                    </span>
                   </button>
-                  {openFaq === i && (
-                    <div style={{ padding: '0 20px 18px' }}>
-                      <p style={{ fontSize: '14px', color: '#6B5E52', lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif" }}>
-                        {faq.a}
-                      </p>
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <motion.div
+                        key="content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <p
+                          style={{
+                            fontSize: 16,
+                            color: 'var(--ink-mid)',
+                            lineHeight: 1.7,
+                            padding: '0 4px 24px',
+                            maxWidth: 620,
+                          }}
+                        >
+                          {faq.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </ScrollReveal>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── BOTTOM CTA ── */}
+      {/* BOTTOM CTA */}
       <section
         style={{
-          padding: 'clamp(80px, 12vw, 120px) 24px',
+          padding: 'clamp(100px, 14vw, 160px) 24px',
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #FAF9F7 0%, #F3EDE7 100%)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <ScrollReveal>
-          <h2
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 'clamp(28px, 5vw, 44px)',
-              fontWeight: 800, letterSpacing: '-0.03em',
-              color: '#2D2D2D', lineHeight: 1.2, marginBottom: '16px',
-            }}
-          >
-            your voice. your messages.
-            <br />
-            <span style={{ color: '#C4784A' }}>just not the blank-page panic.</span>
-          </h2>
-          <p style={{ fontSize: '16px', color: '#6B5E52', marginBottom: '36px', lineHeight: 1.6 }}>
-            join the waitlist. be there from day one.
-          </p>
-          <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-            <button
-              className="btn-primary"
-              style={{ padding: '14px 36px', borderRadius: '14px', fontSize: '16px' }}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(700px 400px at 50% 50%, rgba(196,120,74,0.08), transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ maxWidth: 820, margin: '0 auto', position: 'relative' }}>
+          <ScrollReveal>
+            <h2
+              style={{
+                fontFamily: 'var(--font-jakarta)',
+                fontSize: 'clamp(40px, 7vw, 88px)',
+                fontWeight: 700,
+                letterSpacing: '-0.035em',
+                color: 'var(--ink)',
+                lineHeight: 0.98,
+                marginBottom: 24,
+              }}
             >
-              join the waitlist →
-            </button>
-          </a>
-        </ScrollReveal>
+              your voice. your messages.
+              <br />
+              <span className="serif-italic" style={{ color: 'var(--terra)', fontWeight: 400 }}>
+                just not the blank-page panic.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={120}>
+            <p
+              style={{
+                fontSize: 18,
+                color: 'var(--ink-mid)',
+                marginBottom: 40,
+                lineHeight: 1.6,
+              }}
+            >
+              join the waitlist. be there from day one.
+            </p>
+          </ScrollReveal>
+          <ScrollReveal delay={200}>
+            <Magnetic strength={0.28}>
+              <button
+                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className="btn-primary"
+                style={{
+                  padding: '18px 36px',
+                  borderRadius: 999,
+                  fontSize: 16,
+                  fontFamily: 'var(--font-jakarta)',
+                }}
+              >
+                join the waitlist
+                <span aria-hidden style={{ marginLeft: 8 }}>→</span>
+              </button>
+            </Magnetic>
+          </ScrollReveal>
+        </div>
       </section>
 
       <SiteFooter />
