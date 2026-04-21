@@ -10,6 +10,8 @@ import ScrollProgress from './components/ScrollProgress';
 import AnimatedHeading from './components/AnimatedHeading';
 import Magnetic from './components/Magnetic';
 import Marquee from './components/Marquee';
+import ScrollSteps from './components/ScrollSteps';
+import SplineScene from './components/SplineScene';
 
 // ─────────────────────────────────────────────────────────
 // Animated counter
@@ -251,53 +253,6 @@ function StatsSection() {
 }
 
 // ─────────────────────────────────────────────────────────
-// Step card with icon
-// ─────────────────────────────────────────────────────────
-const STEPS = [
- {
- num: '01',
- title: 'teach it your voice',
- desc: "paste 3 messages you've written before. DMs, texts, anything where you sounded like yourself.",
- svg: (
- <path
- d="M3 12h6l2-6 4 12 2-6h4"
- stroke="currentColor"
- strokeWidth="1.6"
- strokeLinecap="round"
- strokeLinejoin="round"
- fill="none"
- />
- ),
- },
- {
- num: '02',
- title: 'drop a profile',
- desc: "paste a linkedin link or their headline, about, role. a messy mobile paste works too.",
- svg: (
- <>
- <circle cx="12" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
- <path d="M4 20.5c0-3.6 3.6-6 8-6s8 2.4 8 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
- </>
- ),
- },
- {
- num: '03',
- title: 'send something real',
- desc: 'two drafts, both in your voice. pick the one that feels right. copy, paste, send.',
- svg: (
- <path
- d="M4 12h12m0 0-5-5m5 5-5 5M19 4v16"
- stroke="currentColor"
- strokeWidth="1.6"
- strokeLinecap="round"
- strokeLinejoin="round"
- fill="none"
- />
- ),
- },
-];
-
-// ─────────────────────────────────────────────────────────
 // Quote set
 // ─────────────────────────────────────────────────────────
 const QUOTES = [
@@ -419,45 +374,6 @@ export default function LandingPage() {
  <motion.div
  style={{ position: 'relative', maxWidth: 1080, width: '100%', y: heroLift, opacity: heroFade }}
  >
- {/* Eyebrow */}
- <motion.div
- initial={{ opacity: 0, y: 18 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1], delay: 0.2 }}
- style={{
- display: 'flex',
- justifyContent: 'center',
- marginBottom: 40,
- }}
- >
- <div
- style={{
- display: 'inline-flex',
- alignItems: 'center',
- gap: 10,
- padding: '6px 14px 6px 10px',
- borderRadius: 999,
- border: '1px solid var(--ink-whisper)',
- background: 'rgba(250, 248, 244, 0.6)',
- backdropFilter: 'blur(8px)',
- WebkitBackdropFilter: 'blur(8px)',
- }}
- >
- <span
- className="pulse-dot"
- style={{
- width: 7,
- height: 7,
- borderRadius: '50%',
- background: 'var(--terra)',
- }}
- />
- <span className="mono" style={{ fontSize: 11, color: 'var(--ink-soft)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
- now in private beta
- </span>
- </div>
- </motion.div>
-
  {/* Display headline */}
  <AnimatedHeading
  text="your message."
@@ -546,31 +462,6 @@ export default function LandingPage() {
  </motion.div>
  </motion.div>
 
- {/* Scroll hint */}
- <motion.div
- initial={{ opacity: 0 }}
- animate={{ opacity: 1 }}
- transition={{ delay: 1.8, duration: 1 }}
- style={{
- position: 'absolute',
- bottom: 32,
- left: '50%',
- transform: 'translateX(-50%)',
- display: 'flex',
- flexDirection: 'column',
- alignItems: 'center',
- gap: 10,
- }}
- >
- <span className="mono" style={{ fontSize: 10, color: 'var(--ink-light)', letterSpacing: '0.2em' }}>
- SCROLL
- </span>
- <motion.div
- animate={{ y: [0, 8, 0] }}
- transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
- style={{ width: 1, height: 32, background: 'var(--ink-whisper)' }}
- />
- </motion.div>
  </section>
 
  {/* ── Marquee, tagline riff ── */}
@@ -611,6 +502,85 @@ export default function LandingPage() {
  </span>
  ))}
  </Marquee>
+ </section>
+
+ {/* ── SPLINE 3D SHOWCASE ── */}
+ <section
+ style={{
+ position: 'relative',
+ padding: 'clamp(80px, 12vw, 140px) 24px',
+ overflow: 'hidden',
+ }}
+ >
+ <div
+ style={{
+ maxWidth: 1180,
+ margin: '0 auto',
+ display: 'grid',
+ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+ gap: 48,
+ alignItems: 'center',
+ }}
+ >
+ <ScrollReveal>
+ <div>
+ <p className="eyebrow" style={{ marginBottom: 18 }}>the shape of your voice</p>
+ <h2
+ style={{
+ fontFamily: 'var(--font-jakarta)',
+ fontSize: 'clamp(36px, 5vw, 64px)',
+ fontWeight: 700,
+ letterSpacing: '-0.035em',
+ lineHeight: 1.05,
+ color: 'var(--ink)',
+ marginBottom: 24,
+ paddingBottom: '0.1em',
+ }}
+ >
+ voice isn&apos;t a setting.<br />
+ <span className="serif-italic" style={{ color: 'var(--terra)' }}>
+ it&apos;s a fingerprint.
+ </span>
+ </h2>
+ <p
+ style={{
+ fontSize: 17,
+ color: 'var(--ink-mid)',
+ lineHeight: 1.7,
+ maxWidth: 480,
+ marginBottom: 24,
+ }}
+ >
+ genUine reads the thousand small signatures of how you write, the opener, the
+ punctuation, the rhythm, and maps them into a voice profile that&apos;s only yours.
+ </p>
+ <div
+ className="serif-italic"
+ style={{ fontSize: 22, color: 'var(--terra)', lineHeight: 1.5 }}
+ >
+ a model of you, for you.
+ </div>
+ </div>
+ </ScrollReveal>
+
+ <div
+ style={{
+ position: 'relative',
+ aspectRatio: '1 / 1',
+ width: '100%',
+ maxHeight: 560,
+ borderRadius: 28,
+ overflow: 'hidden',
+ background:
+ 'radial-gradient(circle at 50% 40%, rgba(224, 160, 58, 0.18) 0%, rgba(250, 248, 244, 0.4) 50%, transparent 85%)',
+ }}
+ >
+ <SplineScene
+ scene="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode"
+ style={{ borderRadius: 28 }}
+ />
+ </div>
+ </div>
  </section>
 
  {/* ── LIVE DEMO ── */}
@@ -682,11 +652,11 @@ export default function LandingPage() {
  </div>
  </section>
 
- {/* ── HOW IT WORKS ── */}
- <section style={{ padding: 'clamp(80px, 12vw, 140px) 24px', background: 'var(--paper-warm)' }}>
+ {/* ── HOW IT WORKS, sticky scroll-unfolding ── */}
+ <section style={{ padding: 'clamp(80px, 12vw, 140px) 24px 0', background: 'var(--paper-warm)' }}>
  <div style={{ maxWidth: 1080, margin: '0 auto' }}>
  <ScrollReveal>
- <div style={{ marginBottom: 64, maxWidth: 640 }}>
+ <div style={{ maxWidth: 720 }}>
  <p className="eyebrow" style={{ marginBottom: 18 }}>three steps</p>
  <h2
  style={{
@@ -696,71 +666,17 @@ export default function LandingPage() {
  letterSpacing: '-0.035em',
  lineHeight: 1.05,
  color: 'var(--ink)',
+ paddingBottom: '0.1em',
  }}
  >
- from blank box to <span className="serif-italic" style={{ color: 'var(--terra)' }}>sent</span>{' '}
- , under two minutes.
+ from blank box to <span className="serif-italic" style={{ color: 'var(--terra)' }}>sent,</span>{' '}
+ under two minutes.
  </h2>
  </div>
  </ScrollReveal>
-
- <div
- style={{
- display: 'grid',
- gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
- gap: 16,
- }}
- >
- {STEPS.map((step, i) => (
- <ScrollReveal key={step.num} delay={i * 120}>
- <div
- className="warm-card"
- style={{
- borderRadius: 20,
- padding: '36px 28px',
- height: '100%',
- position: 'relative',
- overflow: 'hidden',
- }}
- >
- <span
- className="mono"
- style={{
- fontSize: 11,
- color: 'var(--ink-light)',
- letterSpacing: '0.16em',
- }}
- >
- {step.num} 
- </span>
-
- <div style={{ marginTop: 28, marginBottom: 28, color: 'var(--terra)' }}>
- <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
- {step.svg}
- </svg>
- </div>
-
- <h3
- style={{
- fontFamily: 'var(--font-jakarta)',
- fontSize: 22,
- fontWeight: 600,
- color: 'var(--ink)',
- marginBottom: 10,
- letterSpacing: '-0.02em',
- }}
- >
- {step.title}
- </h3>
- <p style={{ fontSize: 14.5, color: 'var(--ink-mid)', lineHeight: 1.65 }}>
- {step.desc}
- </p>
- </div>
- </ScrollReveal>
- ))}
- </div>
  </div>
  </section>
+ <ScrollSteps />
 
  {/* ── DIFFERENTIATOR ── */}
  <section style={{ padding: 'clamp(80px, 12vw, 140px) 24px' }}>

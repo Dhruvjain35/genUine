@@ -56,26 +56,6 @@ export default function PricingPage() {
  }}
  />
  <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', textAlign: 'center' }}>
- <ScrollReveal>
- <div
- style={{
- display: 'inline-flex',
- alignItems: 'center',
- gap: 10,
- padding: '6px 14px',
- borderRadius: 999,
- border: '1px solid var(--ink-whisper)',
- backgroundColor: 'var(--paper-warm)',
- marginBottom: 24,
- }}
- >
- <span className="pulse-dot" style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--terra)', display: 'inline-block' }} />
- <span className="mono" style={{ fontSize: 11, color: 'var(--ink-mid)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
- launching soon · waitlist = early access
- </span>
- </div>
- </ScrollReveal>
-
  <ScrollReveal delay={60}>
  <p className="eyebrow" style={{ color: 'var(--terra)', marginBottom: 16 }}>
  , pricing

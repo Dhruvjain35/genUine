@@ -32,7 +32,7 @@ export default function AnimatedHeading({
  animate="show"
  transition={{ staggerChildren: 0.06, delayChildren: delay }}
  >
- <span style={{ display: 'inline-block', overflow: 'hidden', verticalAlign: 'bottom' }}>
+ <span style={{ display: 'inline-block', overflow: 'hidden', verticalAlign: 'bottom', paddingBottom: '0.18em', marginBottom: '-0.18em' }}>
  <motion.span
  variants={{
  hidden: { y: '110%' },
@@ -65,6 +65,8 @@ export default function AnimatedHeading({
  display: 'inline-block',
  overflow: 'hidden',
  verticalAlign: 'bottom',
+ paddingBottom: '0.18em',
+ marginBottom: '-0.18em',
  marginRight: i < words.length - 1 ? '0.28em' : 0,
  }}
  >

@@ -170,7 +170,7 @@ h1, h2, h3, h4, h5, h6 {
 .msg-left { animation: slideInLeft 0.4s var(--ease-out) both; }
 .msg-right { animation: slideInRight 0.35s var(--ease-out) both; }
 .float-anim { animation: float 6s ease-in-out infinite; }
-.pulse-dot { animation: dotPulse 2.4s ease-out infinite; }
+.pulse-dot { display: none !important; }
 
 .stagger-1 { animation-delay: 60ms; }
 .stagger-2 { animation-delay: 140ms; }

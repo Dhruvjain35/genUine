@@ -45,8 +45,7 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
  return () => { document.body.style.overflow = ''; };
  }, [menuOpen]);
 
- const handleLogoClick = (e: React.MouseEvent) => {
- e.preventDefault();
+ const handleLogoClick = () => {
  logoClickCount.current += 1;
  if (logoClickCount.current === 1) {
  logoClickTimer.current = setTimeout(() => { logoClickCount.current = 0; }, 3000);
@@ -93,15 +92,13 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
  justifyContent: 'space-between',
  }}
  >
- {/* Logo, 5-click admin trigger */}
- <button
+ {/* Logo, links to home, 5-click admin trigger */}
+ <Link
+ href="/"
  onClick={handleLogoClick}
  aria-label="genUine, home"
  style={{
- background: 'none',
- border: 'none',
- padding: 0,
- cursor: 'pointer',
+ textDecoration: 'none',
  userSelect: 'none',
  display: 'inline-flex',
  alignItems: 'center',
@@ -138,7 +135,7 @@ export default function SiteHeader({ activePage }: SiteHeaderProps) {
  ∞
  </span>
  )}
- </button>
+ </Link>
 
  {/* Desktop nav */}
  <nav className="hidden md:flex items-center" style={{ gap: 28 }}>
