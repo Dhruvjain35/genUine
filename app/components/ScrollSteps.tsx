@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 
 const STEPS = [
   {
@@ -32,43 +32,14 @@ const STEPS = [
 // Adjacent steps hand off at the boundary via symmetric fades — when step N is
 // at 50% opacity exiting, step N+1 is at 50% opacity entering. No long overlap.
 const COUNT = STEPS.length;
-// Reserve a trailing dwell zone so the final step fully enters well before
-// the sticky section releases.
+// Progress thresholds: step index = floor(progress * COUNT / ACTIVE)
+// ACTIVE < 1 reserves trailing dwell so step 3 locks in before sticky releases.
 const ACTIVE = 0.9;
-const SLICE = ACTIVE / COUNT;
-// Fades are SEQUENTIAL, not overlapping. Step N fades out in the last FADE
-// portion of its slice; step N+1 fades in in the first FADE portion of its
-// slice. Handoff is a single point — only one step visible at a time.
-const FADE = SLICE * 0.25;
 
-function useStepOpacity(index: number, progress: MotionValue<number>) {
-  const start = index * SLICE;
-  const end = (index + 1) * SLICE;
-  const isFirst = index === 0;
-  const isLast = index === COUNT - 1;
-
-  // Build strictly-increasing keyframes. Duplicate inputs break useTransform.
-  let input: number[];
-  let output: number[];
-
-  if (isFirst && isLast) {
-    input = [0, 1];
-    output = [1, 1];
-  } else if (isFirst) {
-    // starts visible, fades out at end of slice
-    input = [end - FADE, end, 1];
-    output = [1, 0, 0];
-  } else if (isLast) {
-    // invisible, fades in at start of slice, then holds
-    input = [0, start, start + FADE];
-    output = [0, 0, 1];
-  } else {
-    // middle: invisible → fade in → hold → fade out → invisible
-    input = [start - 0.0001, start, start + FADE, end - FADE, end, end + 0.0001];
-    output = [0, 0, 1, 1, 0, 0];
-  }
-
-  return useTransform(progress, input, output);
+function activeIndex(p: number): number {
+  if (p >= ACTIVE) return COUNT - 1;
+  const i = Math.floor((p / ACTIVE) * COUNT);
+  return Math.max(0, Math.min(COUNT - 1, i));
 }
 
 // ─── Section ──────────────────────────────────────────────────────────────────
@@ -78,16 +49,20 @@ export default function ScrollSteps() {
     target: ref,
     offset: ['start start', 'end end'],
   });
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(scrollYProgress, 'change', (p) => {
+    const next = activeIndex(p);
+    setActive((prev) => (prev === next ? prev : next));
+  });
+
+  const step = STEPS[active];
 
   return (
     <section
       ref={ref}
       style={{
         position: 'relative',
-        // Each step gets ~133vh of scroll distance (section height - viewport).
-        // Bigger = each step lingers longer, easier to read at human scroll speed.
-        // Each step gets ~150vh of scroll; extra tail (~100vh) lets the final
-        // step fully settle and linger before the sticky releases.
+        // ~150vh per step + ~100vh trailing dwell so step 3 holds on screen.
         height: `${COUNT * 150 + 100}vh`,
         background: 'var(--paper-warm)',
       }}
@@ -124,16 +99,42 @@ export default function ScrollSteps() {
               justifyContent: 'center',
             }}
           >
-            {STEPS.map((_, i) => (
-              <StepVisual key={i} index={i} progress={scrollYProgress} />
-            ))}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+                transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {active === 0 && <VoiceCard />}
+                {active === 1 && <ProfileCard />}
+                {active === 2 && <DraftCard />}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Right: text stage */}
           <div style={{ position: 'relative', minHeight: 440 }}>
-            {STEPS.map((step, i) => (
-              <StepText key={i} step={step} index={i} progress={scrollYProgress} />
-            ))}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+                transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                style={{ maxWidth: 500 }}
+              >
+                <StepTextInner step={step} />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -141,49 +142,10 @@ export default function ScrollSteps() {
   );
 }
 
-// ─── Left stage: one card per step ───────────────────────────────────────────
-function StepVisual({ index, progress }: { index: number; progress: MotionValue<number> }) {
-  const opacity = useStepOpacity(index, progress);
-  return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity,
-        willChange: 'opacity',
-      }}
-    >
-      {index === 0 && <VoiceCard />}
-      {index === 1 && <ProfileCard />}
-      {index === 2 && <DraftCard />}
-    </motion.div>
-  );
-}
-
 // ─── Right stage: one block of text per step ─────────────────────────────────
-function StepText({
-  step,
-  index,
-  progress,
-}: {
-  step: (typeof STEPS)[number];
-  index: number;
-  progress: MotionValue<number>;
-}) {
-  const opacity = useStepOpacity(index, progress);
+function StepTextInner({ step }: { step: (typeof STEPS)[number] }) {
   return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        opacity,
-        willChange: 'opacity',
-        maxWidth: 500,
-      }}
-    >
+    <>
       <div
         className="mono"
         style={{
@@ -236,7 +198,7 @@ function StepText({
       <span className="serif-italic" style={{ fontSize: 22, color: 'var(--terra)' }}>
         {step.accent}
       </span>
-    </motion.div>
+    </>
   );
 }
 
